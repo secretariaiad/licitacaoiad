@@ -715,7 +715,6 @@ const authService = {
       mostrarToast("Usuário rejeitado/bloqueado com sucesso.", "info");
     }
   },
-  },
 
   /**
    * Atualiza a interface e dados do formulário com o usuário autenticado
