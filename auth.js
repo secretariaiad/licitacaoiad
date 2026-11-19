@@ -501,18 +501,45 @@ const authService = {
   },
 
   /**
-   * Moderação: Listar usuários pendentes
+   * Moderação: Listar usuários pendentes ou todos
    */
   async listarUsuarios(filtroStatus = "todos") {
-    let lista = [];
-    if (window.supabaseClient) {
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    let lista = null;
+
+    // 1. Tenta via REST direto (mais rápido e 100% confiável)
+    try {
+      let url = `${supUrl}/rest/v1/secretaria_usuarios?select=*&order=created_at.desc`;
+      if (filtroStatus && filtroStatus !== "todos") {
+        url += `&status=eq.${encodeURIComponent(filtroStatus)}`;
+      }
+      const resp = await fetch(url, {
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`
+        }
+      });
+      if (resp.ok) {
+        const dados = await resp.json();
+        if (Array.isArray(dados)) {
+          lista = dados;
+        }
+      }
+    } catch (e) {
+      console.warn("REST direto falhou em listarUsuarios:", e);
+    }
+
+    // 2. Fallback via SDK SupabaseClient
+    if (lista === null && window.supabaseClient) {
       try {
         let query = window.supabaseClient.from("secretaria_usuarios").select("*").order("created_at", { ascending: false });
         if (filtroStatus !== "todos") {
           query = query.eq("status", filtroStatus);
         }
         const { data, error } = await query;
-        if (!error && data) {
+        if (!error && Array.isArray(data)) {
           lista = data;
         }
       } catch (e) {
@@ -520,12 +547,19 @@ const authService = {
       }
     }
 
-    if (lista.length === 0) {
-      const locais = this._obterUsuariosLocais();
-      lista = filtroStatus === "todos" ? locais : locais.filter(u => u.status === filtroStatus);
+    // Se Supabase respondeu com sucesso (mesmo que vazio []), sincroniza e retorna!
+    if (Array.isArray(lista)) {
+      if (filtroStatus === "todos") {
+        try {
+          this._salvarUsuariosLocais(lista);
+        } catch (e) {}
+      }
+      return lista;
     }
 
-    return lista;
+    // 3. Fallback no LocalStorage APENAS se Supabase falhou completamente (lista === null)
+    const locais = this._obterUsuariosLocais();
+    return filtroStatus === "todos" ? locais : locais.filter(u => u.status === filtroStatus);
   },
 
   /**
@@ -534,6 +568,41 @@ const authService = {
    */
   async aprovarUsuario(userId) {
     if (!userId) return;
+
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    // 1. Tenta REST direto via GET + POST (upsert)
+    try {
+      const campoBusca = String(userId).includes("@") ? "email" : "id";
+      const respGet = await fetch(`${supUrl}/rest/v1/secretaria_usuarios?${campoBusca}=eq.${encodeURIComponent(userId)}&limit=1`, {
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`
+        }
+      });
+
+      if (respGet.ok) {
+        const users = await respGet.json();
+        if (Array.isArray(users) && users.length > 0) {
+          const userAtual = { ...users[0], status: "aprovado", updated_at: new Date().toISOString() };
+          await fetch(`${supUrl}/rest/v1/secretaria_usuarios`, {
+            method: 'POST',
+            headers: {
+              'apikey': supKey,
+              'Authorization': `Bearer ${supKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([userAtual])
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Falha no REST ao aprovar:", e);
+    }
+
+    // 2. Fallback via cliente SDK
     if (window.supabaseClient) {
       try {
         let queryBusca = window.supabaseClient.from("secretaria_usuarios").select("*");
@@ -547,38 +616,26 @@ const authService = {
 
         if (!errBusca && users && users.length > 0) {
           const userAtual = { ...users[0], status: "aprovado", updated_at: new Date().toISOString() };
-          const { error: errUpsert } = await window.supabaseClient
-            .from("secretaria_usuarios")
-            .upsert([userAtual]);
-
-          if (errUpsert) {
-            console.warn("Upsert POST falhou, tentando update:", errUpsert);
-            await window.supabaseClient
-              .from("secretaria_usuarios")
-              .update({ status: "aprovado", updated_at: new Date().toISOString() })
-              .eq("id", userAtual.id);
-          }
-
-          if (typeof mostrarToast === "function") {
-            mostrarToast("Usuário aprovado com sucesso no Supabase!", "success");
-          }
-        } else {
-          // Tentativa direta de update caso busca falhe
           await window.supabaseClient
             .from("secretaria_usuarios")
-            .update({ status: "aprovado", updated_at: new Date().toISOString() })
-            .eq("id", userId);
+            .upsert([userAtual]);
         }
       } catch (e) {
-        console.error("Exceção ao aprovar:", e);
+        console.error("Exceção ao aprovar via SDK:", e);
       }
     }
 
+    // 3. Atualiza na lista local de contingência para que não reste pendente
     const locais = this._obterUsuariosLocais();
-    const idx = locais.findIndex(u => u.id === userId || u.email === userId);
-    if (idx !== -1) {
-      locais[idx].status = "aprovado";
-      this._salvarUsuariosLocais(locais);
+    locais.forEach(u => {
+      if (u.id === userId || u.email === userId || (String(userId).includes("@") && u.email && u.email.toLowerCase() === String(userId).toLowerCase())) {
+        u.status = "aprovado";
+      }
+    });
+    this._salvarUsuariosLocais(locais);
+
+    if (typeof mostrarToast === "function") {
+      mostrarToast("✓ Usuário aprovado com sucesso!", "success");
     }
   },
 
@@ -588,6 +645,41 @@ const authService = {
    */
   async rejeitarUsuario(userId) {
     if (!userId) return;
+
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    // 1. Tenta REST direto via GET + POST (upsert)
+    try {
+      const campoBusca = String(userId).includes("@") ? "email" : "id";
+      const respGet = await fetch(`${supUrl}/rest/v1/secretaria_usuarios?${campoBusca}=eq.${encodeURIComponent(userId)}&limit=1`, {
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`
+        }
+      });
+
+      if (respGet.ok) {
+        const users = await respGet.json();
+        if (Array.isArray(users) && users.length > 0) {
+          const userAtual = { ...users[0], status: "rejeitado", updated_at: new Date().toISOString() };
+          await fetch(`${supUrl}/rest/v1/secretaria_usuarios`, {
+            method: 'POST',
+            headers: {
+              'apikey': supKey,
+              'Authorization': `Bearer ${supKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify([userAtual])
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Falha no REST ao rejeitar:", e);
+    }
+
+    // 2. Fallback via cliente SDK
     if (window.supabaseClient) {
       try {
         let queryBusca = window.supabaseClient.from("secretaria_usuarios").select("*");
@@ -601,38 +693,28 @@ const authService = {
 
         if (!errBusca && users && users.length > 0) {
           const userAtual = { ...users[0], status: "rejeitado", updated_at: new Date().toISOString() };
-          const { error: errUpsert } = await window.supabaseClient
-            .from("secretaria_usuarios")
-            .upsert([userAtual]);
-
-          if (errUpsert) {
-            console.warn("Upsert POST falhou, tentando update:", errUpsert);
-            await window.supabaseClient
-              .from("secretaria_usuarios")
-              .update({ status: "rejeitado", updated_at: new Date().toISOString() })
-              .eq("id", userAtual.id);
-          }
-
-          if (typeof mostrarToast === "function") {
-            mostrarToast("Usuário rejeitado/bloqueado com sucesso.", "info");
-          }
-        } else {
           await window.supabaseClient
             .from("secretaria_usuarios")
-            .update({ status: "rejeitado", updated_at: new Date().toISOString() })
-            .eq("id", userId);
+            .upsert([userAtual]);
         }
       } catch (e) {
-        console.error("Exceção ao rejeitar:", e);
+        console.error("Exceção ao rejeitar via SDK:", e);
       }
     }
 
+    // 3. Atualiza na lista local de contingência
     const locais = this._obterUsuariosLocais();
-    const idx = locais.findIndex(u => u.id === userId || u.email === userId);
-    if (idx !== -1) {
-      locais[idx].status = "rejeitado";
-      this._salvarUsuariosLocais(locais);
+    locais.forEach(u => {
+      if (u.id === userId || u.email === userId || (String(userId).includes("@") && u.email && u.email.toLowerCase() === String(userId).toLowerCase())) {
+        u.status = "rejeitado";
+      }
+    });
+    this._salvarUsuariosLocais(locais);
+
+    if (typeof mostrarToast === "function") {
+      mostrarToast("Usuário rejeitado/bloqueado com sucesso.", "info");
     }
+  },
   },
 
   /**
