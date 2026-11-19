@@ -55,16 +55,22 @@ const demandasSupabase = {
 
     try {
       if (idExistente) {
-        // Atualizar demanda existente no Supabase
+        // Atualizar demanda existente no Supabase via upsert (POST) para evitar bloqueio de CORS em PATCH
+        payload.id = idExistente;
         const { data, error } = await window.supabaseClient
           .from(this.TABELA)
-          .update(payload)
-          .eq("id", idExistente)
+          .upsert([payload])
           .select();
 
         if (error) {
-          console.error("Erro ao atualizar no Supabase:", error);
-          return { sucesso: false, erro: error.message };
+          console.error("Erro ao atualizar no Supabase via upsert, tentando update:", error);
+          const { data: dataUp, error: errUp } = await window.supabaseClient
+            .from(this.TABELA)
+            .update(payload)
+            .eq("id", idExistente)
+            .select();
+          if (errUp) return { sucesso: false, erro: errUp.message };
+          return { sucesso: true, id: idExistente, data: dataUp ? dataUp[0] : null, atualizado: true };
         }
         return { sucesso: true, id: idExistente, data: data ? data[0] : null, atualizado: true };
       } else {
@@ -128,6 +134,31 @@ const demandasSupabase = {
     if (!window.supabaseClient) return false;
 
     try {
+      // 1. Tenta obter o registro existente e fazer upsert (POST) livre de CORS PATCH
+      const { data: reg, error: errGet } = await window.supabaseClient
+        .from(this.TABELA)
+        .select("*")
+        .eq("id", id)
+        .limit(1);
+
+      if (!errGet && reg && reg.length > 0) {
+        const atualizado = {
+          ...reg[0],
+          status: novoStatus,
+          updated_at: new Date().toISOString()
+        };
+        if (observacoesAdmin !== null && observacoesAdmin !== undefined) {
+          atualizado.observacoes_admin = observacoesAdmin;
+        }
+
+        const { error: errUpsert } = await window.supabaseClient
+          .from(this.TABELA)
+          .upsert([atualizado]);
+
+        if (!errUpsert) return true;
+      }
+
+      // 2. Fallback via update
       const updatePayload = {
         status: novoStatus,
         updated_at: new Date().toISOString()
