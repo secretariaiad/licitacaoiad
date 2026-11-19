@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_8"></script>
-  <script src="auth.js?v=20261119_8"></script>
-  <script src="demandas-supabase.js?v=20261119_8"></script>
+  <script src="supabase-config.js?v=20261119_9"></script>
+  <script src="auth.js?v=20261119_9"></script>
+  <script src="demandas-supabase.js?v=20261119_9"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -506,6 +506,11 @@
       padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
+    }
+
+    #abaHistorico .items-table th,
+    #abaHistorico .items-table td {
+      padding: 0.65rem 0.5rem;
     }
 
     .items-table tbody tr:hover {
@@ -1351,14 +1356,14 @@
             <table class="items-table">
               <thead>
                 <tr>
-                  <th style="width: 60px;">Nº</th>
-                  <th style="width: 130px;">Data/Hora</th>
+                  <th style="width: 50px;">Nº</th>
+                  <th style="width: 120px;">Data/Hora</th>
                   <th>Solicitante</th>
                   <th>Departamento / Setor</th>
-                  <th style="width: 85px; text-align: center;">Total Itens</th>
-                  <th style="width: 125px; text-align: right;">Estimativa Total</th>
-                  <th style="width: 110px; text-align: center;">Status</th>
-                  <th style="width: 320px; text-align: center;">Ações</th>
+                  <th style="width: 80px; text-align: center;">Total Itens</th>
+                  <th style="width: 115px; text-align: right;">Estimativa Total</th>
+                  <th style="width: 95px; text-align: center;">Status</th>
+                  <th style="width: 290px; text-align: center;">Ações</th>
                 </tr>
               </thead>
               <tbody id="corpoTabelaHistorico">
@@ -2434,23 +2439,23 @@
             <span class="badge ${badgeClass}">${escapeHtml(s.status)}</span>
           </td>
           <td style="text-align: center; white-space: nowrap;">
-            <div style="display: inline-flex; gap: 0.35rem; align-items: center; justify-content: center;">
-              <button class="btn btn-outline" style="padding: 0.3rem 0.5rem; font-size: 0.75rem;" onclick="abrirDetalhesSolicitacao(${s.id})" title="Visualizar materiais da demanda">
-                <i data-lucide="eye" style="width: 13px; height: 13px;"></i> Ver
+            <div style="display: inline-flex; gap: 0.25rem; align-items: center; justify-content: center;">
+              <button class="btn btn-outline" style="padding: 0.25rem 0.45rem; font-size: 0.72rem;" onclick="abrirDetalhesSolicitacao(${s.id})" title="Visualizar materiais da demanda">
+                <i data-lucide="eye" style="width: 12px; height: 12px;"></i> Ver
               </button>
-              <button class="btn btn-outline" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #1e3a8a; border-color: #cbd5e1;" onclick="editarSolicitacao(${s.id})" title="Carregar no formulário para editar">
-                <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Editar
+              <button class="btn btn-outline" style="padding: 0.25rem 0.45rem; font-size: 0.72rem; color: #1e3a8a; border-color: #cbd5e1;" onclick="editarSolicitacao(${s.id})" title="Carregar no formulário para editar">
+                <i data-lucide="edit-3" style="width: 12px; height: 12px;"></i> Editar
               </button>
               ${isAdminOuSec ? `
-                <button class="btn btn-outline" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #d97706; border-color: #fde68a;" onclick="abrirModalStatusDemanda(${s.id}, '${escapeHtml(s.status)}', '${escapeHtml(s.observacoes_admin || '')}')" title="Alterar status administrativo">
-                  <i data-lucide="tag" style="width: 13px; height: 13px;"></i> Status
+                <button class="btn btn-outline" style="padding: 0.25rem 0.45rem; font-size: 0.72rem; color: #d97706; border-color: #fde68a;" onclick="abrirModalStatusDemanda(${s.id}, '${escapeHtml(s.status)}', '${escapeHtml(s.observacoes_admin || '')}')" title="Alterar status administrativo">
+                  <i data-lucide="tag" style="width: 12px; height: 12px;"></i> Status
                 </button>
-                <button class="btn btn-outline" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; color: #dc2626; border-color: #fecaca;" onclick="excluirSolicitacaoDemanda(${s.id})" title="Excluir demanda permanentemente (Administrador)">
-                  <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i> Excluir
+                <button class="btn btn-outline" style="padding: 0.25rem 0.45rem; font-size: 0.72rem; color: #dc2626; border-color: #fecaca;" onclick="excluirSolicitacaoDemanda(${s.id})" title="Excluir demanda permanentemente (Administrador)">
+                  <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> Excluir
                 </button>
               ` : ''}
-              <button class="btn btn-success" style="padding: 0.3rem 0.55rem; font-size: 0.75rem; background: #059669; border-color: #059669;" onclick="enviarSolicitacaoSalvaPorEmail(${s.id})" title="Enviar esta demanda ao setor por e-mail">
-                <i data-lucide="send" style="width: 13px; height: 13px;"></i> Enviar
+              <button class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.72rem; background: #059669; border-color: #059669;" onclick="enviarSolicitacaoSalvaPorEmail(${s.id})" title="Enviar esta demanda ao setor por e-mail">
+                <i data-lucide="send" style="width: 12px; height: 12px;"></i> Enviar
               </button>
             </div>
           </td>
