@@ -30,6 +30,7 @@ const demandasSupabase = {
       email: dados.solicitante.email,
       categoria: dados.solicitante.categoria || 'Consumo',
       justificativa: dados.solicitante.justificativa,
+      status: 'Cadastrada',
       total_itens: dados.itens.length,
       estimativa_total: totalDemanda,
       itens: dados.itens.map(it => ({
@@ -41,9 +42,9 @@ const demandasSupabase = {
         subelemento: it.subelemento,
         desc_subelemento: it.desc_subelemento,
         unidade: it.unidade,
-        quantidade: Number(it.quantidade || 1),
+        quantidade: Math.max(1, Math.floor(Number(it.quantidade || 1))),
         valor_unitario: Number(it.valor_unitario || 0),
-        valor_total: Number(it.quantidade || 1) * Number(it.valor_unitario || 0),
+        valor_total: Math.max(1, Math.floor(Number(it.quantidade || 1))) * Number(it.valor_unitario || 0),
         prioridade: it.prioridade || 'Média',
         links: it.links || '',
         justificativa: it.justificativa || '',
@@ -54,28 +55,32 @@ const demandasSupabase = {
     };
 
     try {
-      if (idExistente) {
-        // Atualizar demanda existente no Supabase via upsert (POST) para evitar bloqueio de CORS em PATCH
-        payload.id = idExistente;
+      if (idExistente && !isNaN(Number(idExistente))) {
+        // Atualizar demanda existente no Supabase via upsert (POST)
+        payload.id = Number(idExistente);
         const { data, error } = await window.supabaseClient
           .from(this.TABELA)
           .upsert([payload])
           .select();
 
         if (error) {
-          console.error("Erro ao atualizar no Supabase via upsert, tentando update:", error);
-          const { data: dataUp, error: errUp } = await window.supabaseClient
+          console.warn("Aviso no upsert via ID, tentando inserção alternativa:", error);
+          delete payload.id;
+          payload.created_at = new Date().toISOString();
+          const { data: dataIns, error: errIns } = await window.supabaseClient
             .from(this.TABELA)
-            .update(payload)
-            .eq("id", idExistente)
+            .insert([payload])
             .select();
-          if (errUp) return { sucesso: false, erro: errUp.message };
-          return { sucesso: true, id: idExistente, data: dataUp ? dataUp[0] : null, atualizado: true };
+          if (errIns) {
+            console.error("Erro na inserção alternativa:", errIns);
+            return { sucesso: false, erro: errIns.message };
+          }
+          const rec = dataIns && dataIns.length > 0 ? dataIns[0] : null;
+          return { sucesso: true, id: rec?.id || null, data: rec };
         }
-        return { sucesso: true, id: idExistente, data: data ? data[0] : null, atualizado: true };
+        return { sucesso: true, id: payload.id, data: data ? data[0] : null, atualizado: true };
       } else {
-        // Inserir nova demanda no Supabase
-        payload.status = 'Cadastrada';
+        // Inserir nova demanda no Supabase (POST)
         payload.created_at = new Date().toISOString();
 
         const { data, error } = await window.supabaseClient

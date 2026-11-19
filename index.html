@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js"></script>
-  <script src="auth.js"></script>
-  <script src="demandas-supabase.js"></script>
+  <script src="supabase-config.js?v=20261119_4"></script>
+  <script src="auth.js?v=20261119_4"></script>
+  <script src="demandas-supabase.js?v=20261119_4"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -1228,7 +1228,7 @@
                 
                 <div class="form-group col-2">
                   <label for="itemQtd">Quantidade <span class="required">*</span></label>
-                  <input type="number" id="itemQtd" class="form-control" min="1" step="any" value="1" oninput="calcularTotalItem()">
+                  <input type="number" id="itemQtd" class="form-control" min="1" step="1" value="1" oninput="this.value=this.value.replace(/[^0-9]/g,'');calcularTotalItem()" onkeydown="if(event.key==='.'||event.key===','||event.key==='e'||event.key==='E'||event.key==='-')event.preventDefault()">
                 </div>
 
                 <div class="form-group col-3">
@@ -1746,7 +1746,8 @@
     }
 
     function calcularTotalItem() {
-      const qtd = parseFloat(document.getElementById("itemQtd").value) || 0;
+      const rawQtd = (document.getElementById("itemQtd").value || "").replace(/[^0-9]/g, '');
+      const qtd = parseInt(rawQtd, 10) || 0;
       const vUnit = parseFloat(document.getElementById("itemValorUnit").value) || 0;
       const tot = qtd * vUnit;
       document.getElementById("itemValorTotal").value = formatarMoeda(tot);
@@ -1758,9 +1759,15 @@
         return;
       }
 
-      const qtd = parseFloat(document.getElementById("itemQtd").value);
-      if (!qtd || qtd <= 0) {
-        mostrarToast("Informe uma quantidade válida!", "error");
+      const rawQtd = (document.getElementById("itemQtd").value || "").trim();
+      if (rawQtd.includes(".") || rawQtd.includes(",")) {
+        mostrarToast("Apenas números inteiros são permitidos na quantidade (sem decimais ou vírgula)!", "error");
+        document.getElementById("itemQtd").focus();
+        return;
+      }
+      const qtd = parseInt(rawQtd, 10);
+      if (!qtd || isNaN(qtd) || qtd <= 0) {
+        mostrarToast("Informe uma quantidade inteira válida (mínimo 1)!", "error");
         document.getElementById("itemQtd").focus();
         return;
       }
@@ -2326,7 +2333,9 @@
       tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Carregando solicitações...</p></td></tr>`;
 
       const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
-      const isAdminOuSec = usuarioLogado && (usuarioLogado.is_admin || (typeof authService !== "undefined" && authService.isUsuarioAdmin(usuarioLogado)));
+      const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
+      const ADMINS_LIST = ["felipe.braga@ufjf.br", "josue.ferreira@ufjf.br", "andre.xando@ufjf.br", "felipe.braga", "josue.ferreira", "andre.xando"];
+      const isAdminOuSec = (usuarioLogado && usuarioLogado.is_admin === true) || ADMINS_LIST.includes(emailLogado) || (typeof authService !== "undefined" && authService.isUsuarioAdmin(usuarioLogado));
 
       let sols = [];
 
@@ -2334,6 +2343,7 @@
       if (window.demandasSupabase) {
         try {
           const dadosSupabase = await demandasSupabase.listarDemandas();
+          console.log("✓ Demandas retornadas do Supabase:", dadosSupabase?.length, "isAdmin:", isAdminOuSec);
           if (dadosSupabase && Array.isArray(dadosSupabase)) {
             sols = dadosSupabase.map(d => ({
               id: d.id,
@@ -2382,7 +2392,6 @@
 
       // Se não for administrador, filtra apenas as próprias demandas cadastradas
       if (!isAdminOuSec && usuarioLogado && usuarioLogado.email) {
-        const emailLogado = (usuarioLogado.email || "").toLowerCase().trim();
         const siapeLogado = (usuarioLogado.siape || "").trim();
         sols = sols.filter(s => 
           (s.email && s.email.toLowerCase().trim() === emailLogado) ||
