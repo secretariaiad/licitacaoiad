@@ -2237,11 +2237,14 @@
         itens: itensDaDemanda
       };
 
+      // 1. OBRIGATÓRIO: Salvar a demanda no banco central (Supabase) antes de qualquer envio de e-mail!
+      await salvarDemanda();
+
       const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
 
-      // 1. Se houver Webhook do Google Apps Script configurado, envia 100% automático em segundo plano
+      // 2. Se houver Webhook do Google Apps Script configurado, envia 100% automático em segundo plano
       if (webhookUrl) {
-        mostrarToast("Enviando e-mail automaticamente em segundo plano...", "info");
+        mostrarToast("Enviando e-mail de notificação em segundo plano...", "info");
         try {
           await fetch(webhookUrl, {
             method: "POST",
@@ -2250,17 +2253,14 @@
             body: JSON.stringify(payload)
           });
 
-          // Também salva a demanda no histórico
-          await salvarDemanda();
-
-          mostrarToast("✓ Solicitação enviada por e-mail com sucesso para secretaria.iad@ufjf.br!", "success");
+          mostrarToast("✓ Solicitação gravada no sistema e enviada por e-mail para secretaria.iad@ufjf.br!", "success");
           return;
         } catch (err) {
           console.warn("Falha no Google Apps Script, recorrendo ao mailto:", err);
         }
       }
 
-      // 2. Se não houver webhook configurado, pergunta ou abre mailto transparente
+      // 3. Fallback: se não houver webhook ou falhar, abre mailto transparente
       const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
       
       let iframe = document.getElementById("hiddenMailFrame");
@@ -2273,7 +2273,7 @@
       iframe.src = mailtoUrl;
 
       navigator.clipboard?.writeText(corpo).catch(() => {});
-      mostrarToast("Solicitação gerada! Abrindo cliente de e-mail...", "success");
+      mostrarToast("✓ Solicitação gravada no sistema! Abrindo cliente de e-mail...", "success");
     }
 
     function configurarWebhookAppsScript() {
