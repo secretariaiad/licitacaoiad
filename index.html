@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_14"></script>
-  <script src="auth.js?v=20261119_14"></script>
-  <script src="demandas-supabase.js?v=20261119_14"></script>
+  <script src="supabase-config.js?v=20261119_15"></script>
+  <script src="auth.js?v=20261119_15"></script>
+  <script src="demandas-supabase.js?v=20261119_15"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -114,10 +114,37 @@
     }
 
     .auto-save-status .dot {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: #4ade80;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+
+    .auto-save-status .dot.saving {
+      background: #fbbf24;
+      box-shadow: 0 0 8px #fbbf24;
+      transform: scale(1.15);
+    }
+
+    .auto-save-status .dot.saved {
+      background: #4ade80;
+      box-shadow: 0 0 6px #4ade80;
+      transform: scale(1);
+    }
+
+    .alert-banner-rascunho {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: var(--radius);
+      padding: 0.85rem 1.15rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
     }
 
     .nav-tabs {
@@ -1345,21 +1372,32 @@
 
     <!-- ABA NOVA SOLICITAÇÃO -->
     <section id="abaNovaSolicitacao">
+      <!-- Banner de Rascunho Recuperado Automaticamente -->
+      <div id="bannerRascunhoRestaurado" class="alert-banner-rascunho" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.35rem;">💾</span>
+          <div>
+            <strong style="color: #0369a1; font-size: 0.9rem;">Rascunho recuperado automaticamente!</strong>
+            <p id="textoBannerRascunho" style="font-size: 0.8rem; color: #0c4a6e; margin-top: 2px;">
+              Seus dados foram restaurados de onde você parou.
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <button type="button" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; background: white;" onclick="fecharBannerRascunho()">
+            Continuar Preenchendo
+          </button>
+          <button type="button" class="btn btn-danger-sm" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;" onclick="limparFormularioComConfirmacao()" title="Descartar este rascunho salvo">
+            Descartar Rascunho
+          </button>
+        </div>
+      </div>
+
       <form id="formSolicitacao" onsubmit="salvarDemanda(event)">
         <!-- 1. DADOS DO SOLICITANTE -->
         <div class="card">
           <div class="card-header">
             <h2><i data-lucide="user-check" style="width: 20px; height: 20px;"></i> 1. Identificação do Solicitante e Setor (IAD/UFJF)</h2>
-            <div style="display: flex; gap: 0.5rem;">
-
-              <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" onclick="exportarBackupJSON()" title="Baixar cópia de segurança em arquivo JSON">
-                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Exportar Backup
-              </button>
-              <label class="btn btn-outline" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; cursor: pointer; margin: 0;" title="Restaurar de arquivo JSON">
-                <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Backup
-                <input type="file" accept=".json" style="display: none;" onchange="importarBackupJSON(event)">
-              </label>
-            </div>
           </div>
           <div class="card-body">
             <div class="form-grid">
@@ -1797,6 +1835,43 @@
       // Restaurar rascunho anterior se existir
       restaurarRascunhoAutomatico();
 
+      // Listeners globais para salvamento automático em tempo real
+      const formSol = document.getElementById("formSolicitacao");
+      if (formSol) {
+        formSol.addEventListener("input", () => dispararAutoSave());
+        formSol.addEventListener("change", () => dispararAutoSave());
+      }
+      const painelItem = document.getElementById("painelItemPuxado");
+      if (painelItem) {
+        painelItem.addEventListener("input", () => dispararAutoSave());
+        painelItem.addEventListener("change", () => dispararAutoSave());
+      }
+
+      // Heartbeat de auto-save a cada 5 segundos (garante persistência mesmo se parar de digitar)
+      setInterval(() => {
+        if (typeof salvarRascunhoLocal === "function") {
+          salvarRascunhoLocal(true);
+        }
+      }, 5000);
+
+      // Prevenção e salvamento instantâneo se a aba for fechada ou ocultada
+      window.addEventListener("beforeunload", (e) => {
+        if (typeof salvarRascunhoLocal === "function") {
+          salvarRascunhoLocal(true);
+        }
+        if (itensDaDemanda.length > 0 || (document.getElementById("justificativaGeral")?.value || "").trim().length > 10) {
+          e.preventDefault();
+          e.returnValue = "Você possui dados nesta solicitação. Eles estão salvos no rascunho automático.";
+          return e.returnValue;
+        }
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden" && typeof salvarRascunhoLocal === "function") {
+          salvarRascunhoLocal(true);
+        }
+      });
+
       // Sincronizar demandas locais antigas para o Supabase (garante que tudo vá para a nuvem)
       if (typeof demandasSupabase !== "undefined" && typeof demandasSupabase.sincronizarDemandasLocaisParaNuvem === "function") {
         demandasSupabase.sincronizarDemandasLocaisParaNuvem().catch(err => {
@@ -2167,34 +2242,80 @@
       lucide.createIcons();
     }
 
-    // AUTO-SAVE E PERSISTÊNCIA ROBUSTA (Prevenção de perdas / Queda de energia)
+    // AUTO-SAVE E PERSISTÊNCIA ROBUSTA (Prevenção total de perdas / Queda de energia / Pane no navegador)
+    function obterChaveRascunho() {
+      try {
+        const u = (typeof authService !== "undefined" && typeof authService.obterSessao === "function") ? authService.obterSessao() : null;
+        if (u && u.email) {
+          return `${KEY_RASCUNHO}_${u.email.toLowerCase().trim()}`;
+        }
+      } catch (e) {}
+      return KEY_RASCUNHO;
+    }
+
     function dispararAutoSave() {
       clearTimeout(timerAutoSave);
       const statusEl = document.getElementById("textoAutoSave");
-      if (statusEl) statusEl.innerText = "Salvando...";
+      const statusDot = document.querySelector("#statusAutoSave .dot");
+      if (statusEl) statusEl.innerText = "Salvando rascunho...";
+      if (statusDot) {
+        statusDot.classList.add("saving");
+        statusDot.classList.remove("saved");
+      }
 
       timerAutoSave = setTimeout(() => {
         salvarRascunhoLocal();
-      }, 500);
+      }, 400);
     }
 
-    function salvarRascunhoLocal() {
+    function salvarRascunhoLocal(silencioso = false) {
       try {
+        const nome = (document.getElementById("nomeSolicitante")?.value || "").trim();
+        const setor = (document.getElementById("setorSolicitante")?.value || "").trim();
+        const siape = (document.getElementById("siape")?.value || "").trim();
+        const email = (document.getElementById("email")?.value || "").trim();
+        const categoria = document.getElementById("categoria")?.value || "Consumo";
+        const justificativaGeral = (document.getElementById("justificativaGeral")?.value || "").trim();
+
+        // Se estiver tudo completamente vazio e não for edição de demanda, não cria rascunho vazio
+        const temDados = itensDaDemanda.length > 0 || justificativaGeral.length > 0 || (itemSelecionadoAtual !== null);
+        if (!temDados && !demandaEmEdicaoId) {
+          return;
+        }
+
         const rascunho = {
-          nome: (document.getElementById("nomeSolicitante").value || "").trim(),
-          setor: (document.getElementById("setorSolicitante").value || "").trim(),
-          siape: (document.getElementById("siape").value || "").trim(),
-          email: (document.getElementById("email").value || "").trim(),
-          categoria: document.getElementById("categoria").value,
-          justificativaGeral: (document.getElementById("justificativaGeral").value || "").trim(),
+          demandaEmEdicaoId: demandaEmEdicaoId || null,
+          nome: nome,
+          setor: setor,
+          siape: siape,
+          email: email,
+          categoria: categoria,
+          justificativaGeral: justificativaGeral,
           itens: itensDaDemanda,
-          atualizadoEm: new Date().toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit', second: '2-digit'})
+          itemPendente: itemSelecionadoAtual ? {
+            item: itemSelecionadoAtual,
+            qtd: document.getElementById("itemQtd")?.value || "1",
+            vUnit: document.getElementById("itemValorUnit")?.value || "",
+            prioridade: document.getElementById("itemPrioridade")?.value || "Média",
+            links: document.getElementById("itemLinks")?.value || "",
+            especificacoes: document.getElementById("itemEspecificacoes")?.value || ""
+          } : null,
+          atualizadoEm: new Date().toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit', second: '2-digit'}),
+          atualizadoDataHora: new Date().toISOString()
         };
 
-        localStorage.setItem(KEY_RASCUNHO, JSON.stringify(rascunho));
-        
+        const json = JSON.stringify(rascunho);
+        const chave = obterChaveRascunho();
+        localStorage.setItem(chave, json);
+        localStorage.setItem(KEY_RASCUNHO, json); // Redundância geral
+
         const statusEl = document.getElementById("textoAutoSave");
+        const statusDot = document.querySelector("#statusAutoSave .dot");
         if (statusEl) statusEl.innerText = `Salvo às ${rascunho.atualizadoEm}`;
+        if (statusDot) {
+          statusDot.classList.remove("saving");
+          statusDot.classList.add("saved");
+        }
       } catch (err) {
         console.warn("Erro ao salvar rascunho local:", err);
       }
@@ -2202,13 +2323,22 @@
 
     function restaurarRascunhoAutomatico() {
       try {
-        const raw = localStorage.getItem(KEY_RASCUNHO);
+        const chave = obterChaveRascunho();
+        let raw = localStorage.getItem(chave);
+        if (!raw && chave !== KEY_RASCUNHO) {
+          raw = localStorage.getItem(KEY_RASCUNHO);
+        }
         if (!raw) return;
 
         const rascunho = JSON.parse(raw);
         if (!rascunho) return;
 
         let restaurouAlgo = false;
+
+        if (rascunho.demandaEmEdicaoId) {
+          demandaEmEdicaoId = rascunho.demandaEmEdicaoId;
+        }
+
         if (rascunho.nome) { document.getElementById("nomeSolicitante").value = rascunho.nome; restaurouAlgo = true; }
         if (rascunho.setor) { document.getElementById("setorSolicitante").value = rascunho.setor; restaurouAlgo = true; }
         if (rascunho.siape) { document.getElementById("siape").value = rascunho.siape; restaurouAlgo = true; }
@@ -2222,11 +2352,33 @@
           restaurouAlgo = true;
         }
 
-        if (restaurouAlgo) {
-          mostrarToast("Rascunho em andamento restaurado automaticamente!", "info");
+        // Se o usuário estava no meio da edição/especificação de um item antes da queda
+        if (rascunho.itemPendente && rascunho.itemPendente.item) {
+          itemSelecionadoAtual = rascunho.itemPendente.item;
+          preencherPainelItem(rascunho.itemPendente.item);
+          if (rascunho.itemPendente.qtd) document.getElementById("itemQtd").value = rascunho.itemPendente.qtd;
+          if (rascunho.itemPendente.vUnit) document.getElementById("itemValorUnit").value = rascunho.itemPendente.vUnit;
+          if (rascunho.itemPendente.prioridade) document.getElementById("itemPrioridade").value = rascunho.itemPendente.prioridade;
+          if (rascunho.itemPendente.links) document.getElementById("itemLinks").value = rascunho.itemPendente.links;
+          if (rascunho.itemPendente.especificacoes) document.getElementById("itemEspecificacoes").value = rascunho.itemPendente.especificacoes;
+          calcularTotalItem();
+          restaurouAlgo = true;
+        }
+
+        if (restaurouAlgo && (itensDaDemanda.length > 0 || (rascunho.justificativaGeral && rascunho.justificativaGeral.trim().length > 0))) {
+          const banner = document.getElementById("bannerRascunhoRestaurado");
+          const texto = document.getElementById("textoBannerRascunho");
+          if (banner) {
+            if (texto) {
+              const itensTxt = itensDaDemanda.length === 1 ? '1 item na cesta' : `${itensDaDemanda.length} itens na cesta`;
+              texto.innerHTML = `Rascunho salvo às <strong>${rascunho.atualizadoEm || ''}</strong> restaurado com sucesso (${itensTxt}). Seus dados não foram perdidos!`;
+            }
+            banner.style.display = "flex";
+          }
+          mostrarToast("Rascunho em andamento restaurado automaticamente! Nenhum dado foi perdido.", "info");
           const statusEl = document.getElementById("textoAutoSave");
           if (statusEl && rascunho.atualizadoEm) {
-            statusEl.innerText = `Rascunho de ${rascunho.atualizadoEm}`;
+            statusEl.innerText = `Rascunho salvo às ${rascunho.atualizadoEm}`;
           }
         }
       } catch (err) {
@@ -2234,60 +2386,20 @@
       }
     }
 
-    // EXPORTAR E IMPORTAR BACKUP EM JSON
-    function exportarBackupJSON() {
-      const dados = {
-        solicitante: {
-          nome: document.getElementById("nomeSolicitante").value.trim(),
-          setor: document.getElementById("setorSolicitante").value.trim(),
-          siape: document.getElementById("siape").value.trim(),
-          email: document.getElementById("email").value.trim(),
-          categoria: document.getElementById("categoria").value,
-          justificativaGeral: document.getElementById("justificativaGeral").value.trim()
-        },
-        itens: itensDaDemanda,
-        exportadoEm: new Date().toISOString()
-      };
-
-      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `demanda_iad_${dados.solicitante.siape || 'backup'}_${new Date().toISOString().slice(0,10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      mostrarToast("Cópia de segurança JSON baixada!", "success");
+    function fecharBannerRascunho() {
+      const banner = document.getElementById("bannerRascunhoRestaurado");
+      if (banner) banner.style.display = "none";
     }
 
-    function importarBackupJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const dados = JSON.parse(e.target.result);
-          if (dados.solicitante) {
-            document.getElementById("nomeSolicitante").value = dados.solicitante.nome || "";
-            document.getElementById("setorSolicitante").value = dados.solicitante.setor || "";
-            document.getElementById("siape").value = dados.solicitante.siape || "";
-            document.getElementById("email").value = dados.solicitante.email || "";
-            if (dados.solicitante.categoria) document.getElementById("categoria").value = dados.solicitante.categoria;
-            if (dados.solicitante.justificativaGeral) document.getElementById("justificativaGeral").value = dados.solicitante.justificativaGeral;
-          }
-          if (Array.isArray(dados.itens)) {
-            itensDaDemanda = dados.itens;
-            renderizarTabelaCesta();
-          }
-          dispararAutoSave();
-          mostrarToast("Backup restaurado com sucesso!", "success");
-        } catch (err) {
-          mostrarToast("Arquivo JSON inválido ou corrompido.", "error");
-        }
-      };
-      reader.readAsText(file);
+    function removerRascunhoLocal() {
+      try {
+        const chave = obterChaveRascunho();
+        localStorage.removeItem(chave);
+        localStorage.removeItem(KEY_RASCUNHO);
+        fecharBannerRascunho();
+        const statusEl = document.getElementById("textoAutoSave");
+        if (statusEl) statusEl.innerText = "Salvo automaticamente";
+      } catch (e) {}
     }
 
     // SALVAR DEMANDA (Persistência no navegador e API se disponível)
@@ -2431,7 +2543,7 @@
         localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
         
         // Limpar rascunho após salvar com sucesso
-        localStorage.removeItem(KEY_RASCUNHO);
+        removerRascunhoLocal();
 
         if (!salvouSupabase && modoEstatico) {
           mostrarToast(`Atenção: Não foi possível sincronizar com o Supabase. Demanda nº ${registroId} salva temporariamente apenas neste navegador!`, "warning");
@@ -2582,10 +2694,10 @@
     }
 
     function limparFormularioComConfirmacao() {
-      if (confirm("Deseja realmente limpar todos os campos e a cesta desta demanda?")) {
+      if (confirm("Deseja realmente limpar todos os campos e descartar o rascunho desta demanda?")) {
         limparFormulario();
-        localStorage.removeItem(KEY_RASCUNHO);
-        mostrarToast("Formulário limpo.", "info");
+        removerRascunhoLocal();
+        mostrarToast("Formulário limpo e rascunho descartado.", "info");
       }
     }
 
