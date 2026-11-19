@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_4"></script>
-  <script src="auth.js?v=20261119_4"></script>
-  <script src="demandas-supabase.js?v=20261119_4"></script>
+  <script src="supabase-config.js?v=20261119_6"></script>
+  <script src="auth.js?v=20261119_6"></script>
+  <script src="demandas-supabase.js?v=20261119_6"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -2062,9 +2062,10 @@
       // 1. Tentar salvar no Supabase (em nuvem com persistência real)
       let salvouSupabase = false;
       let idGerado = null;
-      if (window.demandasSupabase) {
+      const svcDemandas = window.demandasSupabase || (typeof demandasSupabase !== "undefined" ? demandasSupabase : null);
+      if (svcDemandas) {
         try {
-          const resSup = await demandasSupabase.salvarDemanda(dados, demandaEmEdicaoId);
+          const resSup = await svcDemandas.salvarDemanda(dados, demandaEmEdicaoId);
           if (resSup && resSup.sucesso) {
             salvouSupabase = true;
             idGerado = resSup.id;
@@ -2340,9 +2341,10 @@
       let sols = [];
 
       // 1. Tentar buscar em tempo real do Supabase
-      if (window.demandasSupabase) {
+      const svcDemandas = window.demandasSupabase || (typeof demandasSupabase !== "undefined" ? demandasSupabase : null);
+      if (svcDemandas) {
         try {
-          const dadosSupabase = await demandasSupabase.listarDemandas();
+          const dadosSupabase = await svcDemandas.listarDemandas();
           console.log("✓ Demandas retornadas do Supabase:", dadosSupabase?.length, "isAdmin:", isAdminOuSec);
           if (dadosSupabase && Array.isArray(dadosSupabase)) {
             sols = dadosSupabase.map(d => ({
@@ -2484,8 +2486,9 @@
       mostrarToast("Atualizando status da demanda...", "info");
 
       // Atualizar no Supabase
-      if (window.demandasSupabase) {
-        await demandasSupabase.atualizarStatus(id, novoStatus, obs);
+      const svcDemandas = window.demandasSupabase || (typeof demandasSupabase !== "undefined" ? demandasSupabase : null);
+      if (svcDemandas) {
+        await svcDemandas.atualizarStatus(id, novoStatus, obs);
       }
 
       // Atualizar no LocalStorage

@@ -935,3 +935,8 @@ async function handleCadastroSubmit(event) {
     }
   }
 }
+
+// Exportação explícita para escopo global do navegador
+if (typeof window !== "undefined") {
+  window.authService = authService;
+}

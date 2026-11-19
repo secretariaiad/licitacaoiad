@@ -10,10 +10,6 @@ const demandasSupabase = {
    * Salva ou atualiza uma demanda no Supabase
    */
   async salvarDemanda(dados, idExistente = null) {
-    if (!window.supabaseClient) {
-      return { sucesso: false, erro: "Conexão com o Supabase indisponível." };
-    }
-
     const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
     const totalDemanda = dados.itens.reduce((acc, it) => acc + (Number(it.quantidade || 0) * Number(it.valor_unitario || 0)), 0);
 
@@ -334,3 +330,8 @@ const demandasSupabase = {
     }
   }
 };
+
+// Exportação explícita para escopo global do navegador
+if (typeof window !== "undefined") {
+  window.demandasSupabase = demandasSupabase;
+}
