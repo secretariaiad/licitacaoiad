@@ -532,13 +532,33 @@ const authService = {
    * Moderação: Aprovar Usuário
    */
   async aprovarUsuario(userId) {
+    if (!userId) return;
     if (window.supabaseClient) {
       try {
-        await window.supabaseClient
+        let query = window.supabaseClient
           .from("secretaria_usuarios")
-          .update({ status: "aprovado", updated_at: new Date().toISOString() })
-          .eq("id", userId);
-      } catch (e) {}
+          .update({ status: "aprovado", updated_at: new Date().toISOString() });
+
+        if (String(userId).includes("@")) {
+          query = query.eq("email", userId);
+        } else {
+          query = query.eq("id", userId);
+        }
+
+        const { error } = await query;
+        if (error) {
+          console.error("Erro ao aprovar usuário no Supabase:", error);
+          if (typeof mostrarToast === "function") {
+            mostrarToast("Erro ao aprovar no Supabase: " + error.message, "error");
+          }
+        } else {
+          if (typeof mostrarToast === "function") {
+            mostrarToast("Usuário aprovado com sucesso no Supabase!", "success");
+          }
+        }
+      } catch (e) {
+        console.error("Exceção ao aprovar:", e);
+      }
     }
 
     const locais = this._obterUsuariosLocais();
@@ -553,13 +573,33 @@ const authService = {
    * Moderação: Rejeitar Usuário
    */
   async rejeitarUsuario(userId) {
+    if (!userId) return;
     if (window.supabaseClient) {
       try {
-        await window.supabaseClient
+        let query = window.supabaseClient
           .from("secretaria_usuarios")
-          .update({ status: "rejeitado", updated_at: new Date().toISOString() })
-          .eq("id", userId);
-      } catch (e) {}
+          .update({ status: "rejeitado", updated_at: new Date().toISOString() });
+
+        if (String(userId).includes("@")) {
+          query = query.eq("email", userId);
+        } else {
+          query = query.eq("id", userId);
+        }
+
+        const { error } = await query;
+        if (error) {
+          console.error("Erro ao rejeitar usuário no Supabase:", error);
+          if (typeof mostrarToast === "function") {
+            mostrarToast("Erro ao rejeitar no Supabase: " + error.message, "error");
+          }
+        } else {
+          if (typeof mostrarToast === "function") {
+            mostrarToast("Usuário rejeitado/bloqueado com sucesso.", "info");
+          }
+        }
+      } catch (e) {
+        console.error("Exceção ao rejeitar:", e);
+      }
     }
 
     const locais = this._obterUsuariosLocais();
@@ -665,14 +705,26 @@ const authService = {
 
   async abrirModalModeracao() {
     const modal = document.getElementById("modalModeracaoUsuarios");
-    if (!modal) return;
+    if (!modal) {
+      console.error("Modal modalModeracaoUsuarios não encontrado.");
+      return;
+    }
+    modal.classList.add("open");
     modal.classList.add("show");
+    modal.style.display = "flex";
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
     await this.carregarListaModeracao();
   },
 
   fecharModalModeracao() {
     const modal = document.getElementById("modalModeracaoUsuarios");
-    if (modal) modal.classList.remove("show");
+    if (modal) {
+      modal.classList.remove("open");
+      modal.classList.remove("show");
+      modal.style.display = "";
+    }
   },
 
   async carregarListaModeracao() {
@@ -685,6 +737,13 @@ const authService = {
       container.innerHTML = `<div style="text-align:center; padding: 2rem; color: #64748b;">Nenhum usuário cadastrado.</div>`;
       return;
     }
+
+    // Coloca os cadastros pendentes no topo da lista
+    usuarios.sort((a, b) => {
+      if (a.status === "pendente" && b.status !== "pendente") return -1;
+      if (b.status === "pendente" && a.status !== "pendente") return 1;
+      return (a.nome || "").localeCompare(b.nome || "");
+    });
 
     let html = `
       <table class="tabela-moderacao">

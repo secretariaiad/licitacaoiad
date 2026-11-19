@@ -548,16 +548,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 1000;
+      z-index: 10000;
       opacity: 0;
       visibility: hidden;
       transition: all 0.25s ease;
       padding: 1.5rem;
     }
 
-    .modal-overlay.open {
-      opacity: 1;
-      visibility: visible;
+    .modal-overlay.open,
+    .modal-overlay.show {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
     }
 
     .modal-card {
@@ -1062,7 +1064,7 @@
       </div>
       <div>
         <h1>Solicitação de Compras de Materiais &mdash; IAD/UFJF</h1>
-        <p>Planejamento de Demandas para Licitações &bull; Catálogo com 9.600+ Itens Ativos Integrados</p>
+        <p>Planejamento de Demandas para Licitações (DFD)</p>
       </div>
     </div>
     
@@ -1162,8 +1164,8 @@
         <!-- 2. SELEÇÃO DE ITENS COM AUTOCOMPLETE DINÂMICO E AUTO-PREENCHIMENTO -->
         <div class="card">
           <div class="card-header">
-            <h2><i data-lucide="search" style="width: 20px; height: 20px;"></i> 2. Adicionar Itens Demandados (Busca Inteligente no Catálogo Ativo)</h2>
-            <span class="badge badge-primary"><i data-lucide="check-circle-2" style="width: 12px; height: 12px;"></i> Somente Itens Ativos</span>
+            <h2><i data-lucide="search" style="width: 20px; height: 20px;"></i> 2. Adicionar Itens Demandados (Busca Inteligente no Catálogo)</h2>
+            <span class="badge badge-primary"><i data-lucide="check-circle-2" style="width: 12px; height: 12px;"></i> Catálogo de Materiais</span>
           </div>
           <div class="card-body">
             
@@ -1552,7 +1554,7 @@
               _full_norm: `${codNorm} ${descNorm} ${subNorm}`
             };
           });
-          console.log(`Catálogo indexado com sucesso: ${catalogoEstatico.length} itens ativos.`);
+          console.log("Catálogo indexado com sucesso.");
         }
       } catch (err) {
         console.warn("Aviso ao carregar catálogo de itens:", err);
@@ -2449,12 +2451,18 @@
       if (sel) sel.value = statusAtual || "Cadastrada";
       const obs = document.getElementById("obsStatusDemanda");
       if (obs) obs.value = observacoes || "";
+      modal.classList.add("open");
       modal.classList.add("show");
+      modal.style.display = "flex";
     }
 
     function fecharModalStatusDemanda() {
       const modal = document.getElementById("modalStatusDemanda");
-      if (modal) modal.classList.remove("show");
+      if (modal) {
+        modal.classList.remove("open");
+        modal.classList.remove("show");
+        modal.style.display = "";
+      }
     }
 
     async function confirmarAtualizacaoStatus() {
