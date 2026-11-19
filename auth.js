@@ -728,11 +728,32 @@ const authService = {
 
     this.fecharAuthOverlay();
 
+    const isAdmin = this.isUsuarioAdmin(usuario);
+
+    // Controle da aba Painel de Gestão (visível e padrão para administradores)
+    const btnGestao = document.getElementById("tabBtnGestao");
+    if (isAdmin) {
+      if (btnGestao) btnGestao.style.display = "inline-flex";
+      if (!window._jaDefiniuAbaInicial) {
+        window._jaDefiniuAbaInicial = true;
+        if (typeof mostrarAba === "function") {
+          mostrarAba("gestao");
+        }
+      }
+    } else {
+      if (btnGestao) btnGestao.style.display = "none";
+      if (!window._jaDefiniuAbaInicial) {
+        window._jaDefiniuAbaInicial = true;
+        if (typeof mostrarAba === "function") {
+          mostrarAba("nova");
+        }
+      }
+    }
+
     // 1. Atualizar Header
     const userWidget = document.getElementById("headerUserWidget");
     if (userWidget) {
       const nomeCurto = usuario.nome ? usuario.nome.split(" ")[0] : "Usuário";
-      const isAdmin = this.isUsuarioAdmin(usuario);
 
       userWidget.innerHTML = `
         <div class="user-profile-badge" title="${usuario.nome} (${usuario.email})">
@@ -942,7 +963,12 @@ async function handleLoginSubmit(event) {
     if (res.success) {
       authService.exibirAuthAlert("success", `Bem-vindo(a), ${res.usuario.nome}! Conectando ao sistema...`);
       setTimeout(() => {
+        window._jaDefiniuAbaInicial = false;
         authService.atualizarInterfaceUsuario();
+        const isAdmin = authService.isUsuarioAdmin(res.usuario);
+        if (typeof mostrarAba === "function") {
+          mostrarAba(isAdmin ? "gestao" : "nova");
+        }
         if (typeof carregarHistoricoSolicitacoes === "function") {
           carregarHistoricoSolicitacoes();
         }

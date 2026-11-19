@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_13"></script>
-  <script src="auth.js?v=20261119_13"></script>
-  <script src="demandas-supabase.js?v=20261119_13"></script>
+  <script src="supabase-config.js?v=20261119_14"></script>
+  <script src="auth.js?v=20261119_14"></script>
+  <script src="demandas-supabase.js?v=20261119_14"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -923,6 +923,148 @@
     .btn-mod-reject { background: #dc2626; color: white; }
     .btn-mod-reject:hover { background: #b91c1c; }
 
+    /* PAINEL DE GESTÃO / DASHBOARD (ADMINISTRADORES) */
+    .dashboard-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .dashboard-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dashboard-title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .dashboard-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.15rem 1.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-content .kpi-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-content .kpi-value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 3px;
+    }
+
+    .kpi-content .kpi-sub {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .kpi-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dashboard-split-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-split-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sector-item {
+      padding: 0.85rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .sector-item:hover {
+      background: #f8fafc;
+    }
+
+    .sector-item:last-child {
+      border-bottom: none;
+    }
+
+    .sector-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .sector-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #1e293b;
+    }
+
+    .sector-value {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .sector-bar-bg {
+      height: 7px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .sector-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #1e3a8a, #3b82f6);
+      transition: width 0.4s ease;
+    }
+
     /* STATUS DE DEMANDAS */
     .status-badge-cadastrada { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
     .status-badge-analise { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
@@ -1056,15 +1198,21 @@
           <div class="auth-form-group">
             <label for="cadSetor">Departamento / Setor *</label>
             <select id="cadSetor" required>
-              <option value="Secretaria">Secretaria do IAD</option>
-              <option value="Direção">Direção do IAD</option>
-              <option value="Artes Visuais">Artes Visuais</option>
-              <option value="Bacharelado em Design">Bacharelado em Design</option>
-              <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
-              <option value="Moda">Moda</option>
-              <option value="Música">Música</option>
-              <option value="Laboratórios">Laboratórios</option>
-              <option value="Outro">Outro</option>
+              <option value="Secretaria do IAD">Secretaria do IAD</option>
+              <option value="Direção do IAD">Direção do IAD</option>
+              <option value="Biblioteca do IAD">Biblioteca do IAD</option>
+              <option value="Tecnologia da Informação / TI">Tecnologia da Informação / TI</option>
+              <option value="Serviços Gerais / Terceirizados">Serviços Gerais / Terceirizados</option>
+              <option value="Ateliês e Laboratórios Práticos">Ateliês e Laboratórios Práticos</option>
+              <option value="Laboratórios de Informática / Mídia">Laboratórios de Informática / Mídia</option>
+              <option value="Galeria de Arte do IAD">Galeria de Arte do IAD</option>
+              <option value="Departamento de Artes e Design">Departamento de Artes e Design</option>
+              <option value="Departamento de Cinema e Audiovisual">Departamento de Cinema e Audiovisual</option>
+              <option value="Departamento de Design">Departamento de Design</option>
+              <option value="Departamento de Música">Departamento de Música</option>
+              <option value="Coordenação de Curso">Coordenação de Curso</option>
+              <option value="Pós-Graduação (PPG)">Pós-Graduação (PPG)</option>
+              <option value="Outro Setor">Outro Setor</option>
             </select>
           </div>
 
@@ -1112,6 +1260,9 @@
       </div>
 
       <div class="nav-tabs">
+        <button class="nav-tab-btn" id="tabBtnGestao" onclick="mostrarAba('gestao')" style="display: none;">
+          <i data-lucide="layout-dashboard" style="width: 16px; height: 16px;"></i> Painel de Gestão
+        </button>
         <button class="nav-tab-btn active" id="tabBtnNova" onclick="mostrarAba('nova')">
           <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Nova Solicitação
         </button>
@@ -1126,6 +1277,72 @@
   </header>
 
   <main>
+    <!-- ABA PAINEL DE GESTÃO (ADMINISTRADORES) -->
+    <section id="abaGestao" style="display: none;">
+      <!-- Barra Superior do Dashboard -->
+      <div class="dashboard-header-bar">
+        <div class="dashboard-title-group">
+          <h2><i data-lucide="layout-dashboard" style="width: 24px; height: 24px;"></i> Painel de Gestão e Indicadores de Demandas</h2>
+          <p>Visão executiva e consolidação de recursos demandados pelos setores do Instituto de Artes e Design (IAD / UFJF)</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-outline" onclick="carregarPainelGestao()" title="Atualizar indicadores em tempo real">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Atualizar Dados
+          </button>
+          <button type="button" class="btn btn-outline" style="color: #1e3a8a; border-color: #cbd5e1;" onclick="exportarRelatorioConsolidadoCSV()" title="Baixar planilha consolidada de todas as demandas">
+            <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i> Exportar Relatório Geral (CSV)
+          </button>
+          <button type="button" class="btn btn-primary" onclick="mostrarAba('historico')">
+            <i data-lucide="clipboard-list" style="width: 14px; height: 14px;"></i> Ver Demandas Cadastradas
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Cards de Métricas Principais (KPIs) -->
+      <div class="dashboard-kpi-grid" id="kpiContainer">
+        <!-- Injetado dinamicamente via JS -->
+      </div>
+
+      <!-- Grid Dividido: Recursos por Setor vs. Última Demanda & Top Itens -->
+      <div class="dashboard-split-grid">
+        <!-- Coluna Esquerda: Recursos por Setor do IAD -->
+        <div class="card" style="margin-bottom: 0;">
+          <div class="card-header" style="justify-content: space-between;">
+            <h2><i data-lucide="pie-chart" style="width: 18px; height: 18px;"></i> Recursos Demandados por Setor / Departamento</h2>
+            <span class="badge badge-primary" id="badgeTotalSetoresAtivos">0 setores ativos</span>
+          </div>
+          <div class="card-body" style="padding: 0; max-height: 520px; overflow-y: auto;" id="listaSetoresContainer">
+            <!-- Injetado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Última Demanda & Top Itens Mais Pedidos -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <!-- Card: Última Demanda Registrada / Enviada -->
+          <div class="card" style="margin-bottom: 0;" id="cardUltimaDemanda">
+            <div class="card-header" style="justify-content: space-between;">
+              <h2><i data-lucide="clock" style="width: 18px; height: 18px;"></i> Última Demanda Registrada</h2>
+              <span id="badgeStatusUltimaDemanda" class="badge">Carregando...</span>
+            </div>
+            <div class="card-body" id="conteudoUltimaDemanda" style="padding: 1.25rem;">
+              <!-- Injetado dinamicamente via JS -->
+            </div>
+          </div>
+
+          <!-- Card: Itens Mais Pedidos (Sucinto) -->
+          <div class="card" style="margin-bottom: 0;">
+            <div class="card-header" style="justify-content: space-between;">
+              <h2><i data-lucide="flame" style="width: 18px; height: 18px; color: #f59e0b;"></i> Materiais Mais Pedidos (Top Itens)</h2>
+              <span class="badge badge-secondary" id="badgeTopItensCount">Top Itens</span>
+            </div>
+            <div class="card-body" style="padding: 0; max-height: 280px; overflow-y: auto;" id="conteudoTopItens">
+              <!-- Injetado dinamicamente via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ABA NOVA SOLICITAÇÃO -->
     <section id="abaNovaSolicitacao">
       <form id="formSolicitacao" onsubmit="salvarDemanda(event)">
@@ -1156,17 +1373,44 @@
                 <label for="setorSolicitante">Departamento ou Setor Solicitante <span class="required">*</span></label>
                 <select id="setorSolicitante" class="form-control" required onchange="dispararAutoSave()">
                   <option value="">Selecione o setor...</option>
-                  <option value="DIREÇÃO DO INSTITUTO DE ARTES E DESIGN">DIREÇÃO DO INSTITUTO DE ARTES E DESIGN</option>
-                  <option value="SECRETARIA DO INSTITUTO DE ARTES E DESIGN">SECRETARIA DO INSTITUTO DE ARTES E DESIGN</option>
-                  <option value="DEPARTAMENTO DE ARTES E DESIGN">DEPARTAMENTO DE ARTES E DESIGN</option>
-                  <option value="DEPARTAMENTO DE MÚSICA">DEPARTAMENTO DE MÚSICA</option>
-                  <option value="COORDENAÇÃO DE MODA">COORDENAÇÃO DE MODA</option>
-                  <option value="COORDENAÇÃO BI">COORDENAÇÃO BI</option>
-                  <option value="COORDENAÇÃO DO DESIGN">COORDENAÇÃO DO DESIGN</option>
-                  <option value="COORDENAÇÃO DO CINEMA E AUDIOVISUAL">COORDENAÇÃO DO CINEMA E AUDIOVISUAL</option>
-                  <option value="COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS">COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS</option>
-                  <option value="COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS">COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS</option>
-                  <option value="COORDENAÇÃO DE INTEGRAÇÃO">COORDENAÇÃO DE INTEGRAÇÃO</option>
+                  
+                  <optgroup label="Gestão e Secretaria">
+                    <option value="DIREÇÃO DO INSTITUTO DE ARTES E DESIGN">DIREÇÃO DO INSTITUTO DE ARTES E DESIGN</option>
+                    <option value="SECRETARIA DO INSTITUTO DE ARTES E DESIGN">SECRETARIA DO INSTITUTO DE ARTES E DESIGN</option>
+                  </optgroup>
+
+                  <optgroup label="Apoio, Serviços e Infraestrutura">
+                    <option value="BIBLIOTECA DO IAD">BIBLIOTECA DO IAD</option>
+                    <option value="TECNOLOGIA DA INFORMAÇÃO / SUPORTE DE TI">TECNOLOGIA DA INFORMAÇÃO / SUPORTE DE TI</option>
+                    <option value="SERVIÇOS GERAIS / MANUTENÇÃO / TERCEIRIZADOS">SERVIÇOS GERAIS / MANUTENÇÃO / TERCEIRIZADOS</option>
+                    <option value="ATELIÊS E LABORATÓRIOS PRÁTICOS">ATELIÊS E LABORATÓRIOS PRÁTICOS</option>
+                    <option value="LABORATÓRIOS DE INFORMÁTICA / MÍDIA">LABORATÓRIOS DE INFORMÁTICA / MÍDIA</option>
+                    <option value="GALERIA DE ARTE / ESPAÇO EXPOSITIVO DO IAD">GALERIA DE ARTE / ESPAÇO EXPOSITIVO DO IAD</option>
+                  </optgroup>
+
+                  <optgroup label="Departamentos Acadêmicos">
+                    <option value="DEPARTAMENTO DE ARTES E DESIGN">DEPARTAMENTO DE ARTES E DESIGN</option>
+                    <option value="DEPARTAMENTO DE CINEMA E AUDIOVISUAL">DEPARTAMENTO DE CINEMA E AUDIOVISUAL</option>
+                    <option value="DEPARTAMENTO DE DESIGN">DEPARTAMENTO DE DESIGN</option>
+                    <option value="DEPARTAMENTO DE MÚSICA">DEPARTAMENTO DE MÚSICA</option>
+                  </optgroup>
+
+                  <optgroup label="Coordenações de Curso">
+                    <option value="COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS">COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS</option>
+                    <option value="COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS">COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS</option>
+                    <option value="COORDENAÇÃO DO CINEMA E AUDIOVISUAL">COORDENAÇÃO DO CINEMA E AUDIOVISUAL</option>
+                    <option value="COORDENAÇÃO DO DESIGN">COORDENAÇÃO DO DESIGN</option>
+                    <option value="COORDENAÇÃO DE MODA">COORDENAÇÃO DE MODA</option>
+                    <option value="COORDENAÇÃO DO BACHARELADO EM MÚSICA">COORDENAÇÃO DO BACHARELADO EM MÚSICA</option>
+                    <option value="COORDENAÇÃO DA LICENCIATURA EM MÚSICA">COORDENAÇÃO DA LICENCIATURA EM MÚSICA</option>
+                    <option value="COORDENAÇÃO BI">COORDENAÇÃO BI</option>
+                    <option value="COORDENAÇÃO DE INTEGRAÇÃO">COORDENAÇÃO DE INTEGRAÇÃO</option>
+                  </optgroup>
+
+                  <optgroup label="Pós-Graduação e Pesquisa">
+                    <option value="PÓS-GRADUAÇÃO EM ARTES, MODA E DESIGN (PPG)">PÓS-GRADUAÇÃO EM ARTES, MODA E DESIGN (PPG)</option>
+                    <option value="NÚCLEO DE EXTENSÃO E PESQUISA DO IAD">NÚCLEO DE EXTENSÃO E PESQUISA DO IAD</option>
+                  </optgroup>
                 </select>
               </div>
 
@@ -3136,24 +3380,352 @@
 
     // ABAS
     function mostrarAba(aba) {
+      const abaGestao = document.getElementById("abaGestao");
       const abaNova = document.getElementById("abaNovaSolicitacao");
       const abaHist = document.getElementById("abaHistorico");
+      const btnGestao = document.getElementById("tabBtnGestao");
       const btnNova = document.getElementById("tabBtnNova");
       const btnHist = document.getElementById("tabBtnHistorico");
 
-      if (aba === "nova") {
-        abaNova.style.display = "block";
-        abaHist.style.display = "none";
-        btnNova.classList.add("active");
-        btnHist.classList.remove("active");
+      if (abaGestao) abaGestao.style.display = "none";
+      if (abaNova) abaNova.style.display = "none";
+      if (abaHist) abaHist.style.display = "none";
+
+      if (btnGestao) btnGestao.classList.remove("active");
+      if (btnNova) btnNova.classList.remove("active");
+      if (btnHist) btnHist.classList.remove("active");
+
+      if (aba === "gestao") {
+        if (abaGestao) abaGestao.style.display = "block";
+        if (btnGestao) btnGestao.classList.add("active");
+        carregarPainelGestao();
+      } else if (aba === "nova") {
+        if (abaNova) abaNova.style.display = "block";
+        if (btnNova) btnNova.classList.add("active");
       } else {
-        abaNova.style.display = "none";
-        abaHist.style.display = "block";
-        btnNova.classList.remove("active");
-        btnHist.classList.add("active");
+        if (abaHist) abaHist.style.display = "block";
+        if (btnHist) btnHist.classList.add("active");
         carregarHistoricoSolicitacoes();
       }
-      lucide.createIcons();
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
+    // DASHBOARD / PAINEL DE GESTÃO (ADMINISTRADORES)
+    async function carregarPainelGestao() {
+      const kpiContainer = document.getElementById("kpiContainer");
+      if (kpiContainer) {
+        kpiContainer.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #64748b;"><p>Carregando indicadores e consolidação de demandas...</p></div>`;
+      }
+
+      let demandas = [];
+      const svcDemandas = window.demandasSupabase || (typeof demandasSupabase !== "undefined" ? demandasSupabase : null);
+      if (svcDemandas) {
+        try {
+          const dadosSup = await svcDemandas.listarDemandas();
+          if (dadosSup && Array.isArray(dadosSup)) {
+            demandas = dadosSup;
+            localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(demandas));
+          }
+        } catch (e) {
+          console.warn("Falha ao buscar do Supabase para o dashboard:", e);
+        }
+      }
+
+      if (demandas.length === 0) {
+        try {
+          demandas = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+        } catch (e) {
+          demandas = [];
+        }
+      }
+
+      renderizarPainelGestao(demandas);
+    }
+
+    function renderizarPainelGestao(demandas) {
+      if (!demandas) demandas = [];
+
+      const totalDemandas = demandas.length;
+      const totalOrcamento = demandas.reduce((acc, d) => acc + Number(d.estimativa_total || 0), 0);
+      const totalItens = demandas.reduce((acc, d) => acc + Number(d.total_itens || (d.itens ? d.itens.length : 0)), 0);
+
+      // Status aggregation
+      let aprovadasCount = 0;
+      let analiseCount = 0;
+      let cadastradasCount = 0;
+
+      // Setores aggregation
+      const setoresMap = {};
+      // Itens aggregation
+      const itensMap = {};
+
+      demandas.forEach(d => {
+        const st = (d.status || "Cadastrada").toLowerCase();
+        if (st.includes("aprovad")) aprovadasCount++;
+        else if (st.includes("analise") || st.includes("análise")) analiseCount++;
+        else cadastradasCount++;
+
+        const setor = (d.setor_solicitante || "Não Especificado").trim();
+        if (!setoresMap[setor]) {
+          setoresMap[setor] = { nome: setor, totalValor: 0, totalDemandas: 0, totalItens: 0 };
+        }
+        setoresMap[setor].totalValor += Number(d.estimativa_total || 0);
+        setoresMap[setor].totalDemandas += 1;
+        setoresMap[setor].totalItens += Number(d.total_itens || (d.itens ? d.itens.length : 0));
+
+        // Itens
+        (d.itens || []).forEach(it => {
+          const chave = (it.codigo && it.codigo !== "-") ? it.codigo : (it.descricao || "Item");
+          if (!itensMap[chave]) {
+            itensMap[chave] = {
+              codigo: it.codigo || "-",
+              descricao: it.descricao || "Material sem descrição",
+              unidade: it.unidade || "UN",
+              qtdTotal: 0,
+              valorTotal: 0,
+              demandasCount: 0
+            };
+          }
+          const qtd = Number(it.quantidade || 1);
+          const vUnit = Number(it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0));
+          itensMap[chave].qtdTotal += qtd;
+          itensMap[chave].valorTotal += (qtd * vUnit);
+          itensMap[chave].demandasCount += 1;
+        });
+      });
+
+      const listaSetores = Object.values(setoresMap).sort((a, b) => b.totalValor - a.totalValor);
+      const listaTopItens = Object.values(itensMap).sort((a, b) => b.qtdTotal - a.qtdTotal).slice(0, 7);
+      const maiorSetor = listaSetores.length > 0 ? listaSetores[0] : null;
+
+      // 1. KPIs
+      const kpiContainer = document.getElementById("kpiContainer");
+      if (kpiContainer) {
+        kpiContainer.innerHTML = `
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <div class="kpi-label">Recursos Demandados (Total)</div>
+              <div class="kpi-value" style="color: #1e3a8a;">${formatarMoeda(totalOrcamento)}</div>
+              <div class="kpi-sub">Soma de todas as estimativas do IAD</div>
+            </div>
+            <div class="kpi-icon-box" style="background: #eff6ff; color: #1e3a8a;">
+              <i data-lucide="dollar-sign" style="width: 22px; height: 22px;"></i>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <div class="kpi-label">Total de Demandas</div>
+              <div class="kpi-value" style="color: #047857;">${totalDemandas}</div>
+              <div class="kpi-sub">${cadastradasCount} cadastradas &bull; ${aprovadasCount} aprovadas</div>
+            </div>
+            <div class="kpi-icon-box" style="background: #ecfdf5; color: #047857;">
+              <i data-lucide="clipboard-check" style="width: 22px; height: 22px;"></i>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <div class="kpi-label">Itens Requisitados</div>
+              <div class="kpi-value" style="color: #7e22ce;">${totalItens}</div>
+              <div class="kpi-sub">${Object.keys(itensMap).length} materiais distintos no catálogo</div>
+            </div>
+            <div class="kpi-icon-box" style="background: #faf5ff; color: #7e22ce;">
+              <i data-lucide="package" style="width: 22px; height: 22px;"></i>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-content">
+              <div class="kpi-label">Setor com Maior Demanda</div>
+              <div class="kpi-value" style="font-size: 1rem; color: #b45309; word-break: break-word;">${maiorSetor ? escapeHtml(maiorSetor.nome) : "Nenhum"}</div>
+              <div class="kpi-sub">${maiorSetor ? `${formatarMoeda(maiorSetor.totalValor)} (${maiorSetor.totalDemandas} demandas)` : "Aguardando demandas"}</div>
+            </div>
+            <div class="kpi-icon-box" style="background: #fffbeb; color: #b45309;">
+              <i data-lucide="trending-up" style="width: 22px; height: 22px;"></i>
+            </div>
+          </div>
+        `;
+      }
+
+      // 2. Setores
+      const badgeTotalSetoresAtivos = document.getElementById("badgeTotalSetoresAtivos");
+      if (badgeTotalSetoresAtivos) badgeTotalSetoresAtivos.textContent = `${listaSetores.length} setores ativos`;
+
+      const listaSetoresContainer = document.getElementById("listaSetoresContainer");
+      if (listaSetoresContainer) {
+        if (listaSetores.length === 0) {
+          listaSetoresContainer.innerHTML = `<div style="text-align: center; padding: 2.5rem; color: #94a3b8;">Nenhum setor com demandas cadastradas ainda.</div>`;
+        } else {
+          listaSetoresContainer.innerHTML = listaSetores.map((setor, idx) => {
+            const perc = totalOrcamento > 0 ? ((setor.totalValor / totalOrcamento) * 100).toFixed(1) : 0;
+            return `
+              <div class="sector-item">
+                <div class="sector-item-header">
+                  <div>
+                    <span style="font-weight: 700; color: #64748b; font-size: 0.75rem; margin-right: 4px;">#${idx + 1}</span>
+                    <span class="sector-name">${escapeHtml(setor.nome)}</span>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
+                      ${setor.totalDemandas} ${setor.totalDemandas === 1 ? 'demanda' : 'demandas'} &bull; ${setor.totalItens} ${setor.totalItens === 1 ? 'item' : 'itens'}
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div class="sector-value">${formatarMoeda(setor.totalValor)}</div>
+                    <div style="font-size: 0.72rem; font-weight: 700; color: #2563eb; margin-top: 2px;">${perc}% do total</div>
+                  </div>
+                </div>
+                <div class="sector-bar-bg">
+                  <div class="sector-bar-fill" style="width: ${Math.max(4, Math.min(100, perc))}%;"></div>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+
+      // 3. Última Demanda
+      const badgeStatusUltimaDemanda = document.getElementById("badgeStatusUltimaDemanda");
+      const conteudoUltimaDemanda = document.getElementById("conteudoUltimaDemanda");
+      const ultima = demandas.length > 0 ? demandas[0] : null;
+
+      if (conteudoUltimaDemanda) {
+        if (!ultima) {
+          if (badgeStatusUltimaDemanda) badgeStatusUltimaDemanda.style.display = "none";
+          conteudoUltimaDemanda.innerHTML = `<div style="text-align: center; padding: 1.5rem; color: #94a3b8;">Nenhuma demanda registrada até o momento.</div>`;
+        } else {
+          if (badgeStatusUltimaDemanda) {
+            badgeStatusUltimaDemanda.style.display = "inline-block";
+            badgeStatusUltimaDemanda.className = `badge ${getStatusBadgeClass(ultima.status)}`;
+            badgeStatusUltimaDemanda.textContent = ultima.status || "Cadastrada";
+          }
+          conteudoUltimaDemanda.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <div>
+                <span style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">Demanda nº #${ultima.id}</span>
+                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                  Registrada em ${escapeHtml(ultima.data_solicitacao || '-')}
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 1.15rem; font-weight: 800; color: #1e3a8a;">${formatarMoeda(ultima.estimativa_total || 0)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${ultima.total_itens || (ultima.itens ? ultima.itens.length : 0)} itens</div>
+              </div>
+            </div>
+            <div style="background: #f8fafc; border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; border: 1px solid #e2e8f0; font-size: 0.82rem;">
+              <div><strong>Solicitante:</strong> ${escapeHtml(ultima.nome_solicitante || '-')} &bull; SIAPE: ${escapeHtml(ultima.siape || '-')}</div>
+              <div style="color: #475569; margin-top: 2px;"><strong>Setor:</strong> ${escapeHtml(ultima.setor_solicitante || '-')}</div>
+            </div>
+            <button class="btn btn-outline" style="width: 100%; justify-content: center; font-size: 0.8rem; padding: 0.45rem 1rem;" onclick="abrirDetalhesSolicitacao(${ultima.id})">
+              <i data-lucide="eye" style="width: 14px; height: 14px;"></i> Ver Detalhes Desta Demanda
+            </button>
+          `;
+        }
+      }
+
+      // 4. Top Itens Mais Pedidos
+      const conteudoTopItens = document.getElementById("conteudoTopItens");
+      if (conteudoTopItens) {
+        if (listaTopItens.length === 0) {
+          conteudoTopItens.innerHTML = `<div style="text-align: center; padding: 2rem; color: #94a3b8;">Nenhum item demandado ainda.</div>`;
+        } else {
+          conteudoTopItens.innerHTML = `
+            <table class="items-table" style="font-size: 0.78rem;">
+              <thead>
+                <tr>
+                  <th style="width: 35px;">#</th>
+                  <th>Material / Item</th>
+                  <th style="text-align: center; width: 65px;">Qtd. Total</th>
+                  <th style="text-align: right; width: 95px;">Estimado</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${listaTopItens.map((it, idx) => `
+                  <tr>
+                    <td style="font-weight: 700; color: #64748b; text-align: center;">${idx + 1}</td>
+                    <td>
+                      <div style="font-weight: 600; color: #1e293b; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(it.descricao)}">
+                        ${escapeHtml(it.descricao)}
+                      </div>
+                      <div style="font-size: 0.7rem; color: var(--text-muted);">
+                        Cód: ${escapeHtml(it.codigo)} &bull; ${it.demandasCount} ${it.demandasCount === 1 ? 'pedido' : 'pedidos'}
+                      </div>
+                    </td>
+                    <td style="text-align: center; font-weight: 700; color: #0f172a;">${it.qtdTotal} ${escapeHtml(it.unidade)}</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--primary);">${formatarMoeda(it.valorTotal)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+      }
+
+      if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+      }
+    }
+
+    // EXPORTAR RELATÓRIO GERAL (CSV CONSOLIDADO)
+    function exportarRelatorioConsolidadoCSV() {
+      let demandas = [];
+      try {
+        demandas = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+      } catch (e) {
+        demandas = [];
+      }
+
+      if (!demandas || demandas.length === 0) {
+        mostrarToast("Nenhuma demanda registrada para exportar.", "warning");
+        return;
+      }
+
+      let csv = "\uFEFF"; // BOM para Excel abrir acentos em UTF-8 corretamente
+      csv += "ID_DEMANDA;DATA;SOLICITANTE;SIAPE;EMAIL;SETOR;CATEGORIA;STATUS;ESTIMATIVA_TOTAL;ITEM_NUM;CODIGO;DESCRICAO;SUBELEMENTO;PRIORIDADE;UNIDADE;QUANTIDADE;VALOR_UNITARIO;VALOR_TOTAL;ESPECIFICACOES;LINKS\n";
+
+      demandas.forEach(d => {
+        const itens = Array.isArray(d.itens) && d.itens.length > 0 ? d.itens : [{}];
+        itens.forEach((it, idx) => {
+          const vUnit = Number(it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0));
+          const vTot = Number(it.valor_total_estimado !== undefined ? it.valor_total_estimado : (it.valor_total || (vUnit * Number(it.quantidade || 1))));
+
+          const linha = [
+            `"${d.id}"`,
+            `"${d.data_solicitacao || ''}"`,
+            `"${(d.nome_solicitante || '').replace(/"/g, '""')}"`,
+            `"${d.siape || ''}"`,
+            `"${d.email || ''}"`,
+            `"${(d.setor_solicitante || '').replace(/"/g, '""')}"`,
+            `"${d.categoria || 'Consumo'}"`,
+            `"${d.status || 'Cadastrada'}"`,
+            `"${Number(d.estimativa_total || 0).toFixed(2)}"`,
+            `"${idx + 1}"`,
+            `"${(it.codigo || '').replace(/"/g, '""')}"`,
+            `"${(it.descricao || '').replace(/"/g, '""')}"`,
+            `"${(it.subelemento || '')}"`,
+            `"${(it.prioridade || 'Média')}"`,
+            `"${(it.unidade || 'UN')}"`,
+            `"${it.quantidade || 0}"`,
+            `"${vUnit.toFixed(2)}"`,
+            `"${vTot.toFixed(2)}"`,
+            `"${(it.especificacoes || it.observacoes || '').replace(/"/g, '""')}"`,
+            `"${(it.links || '').replace(/"/g, '""')}"`
+          ].join(";");
+          csv += linha + "\n";
+        });
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Relatorio_Geral_Demandas_IAD_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      mostrarToast("✓ Relatório geral consolidado exportado com sucesso (CSV / Excel)!", "success");
     }
 
     // UTILITÁRIOS
