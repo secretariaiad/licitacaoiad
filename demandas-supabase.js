@@ -54,6 +54,43 @@ const demandasSupabase = {
       updated_at: new Date().toISOString()
     };
 
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    // 1. Tenta salvar via REST API direta nativa (livre de bloqueios de SDK ou sessão)
+    try {
+      const payloadEnvio = { ...payload };
+      if (idExistente && !isNaN(Number(idExistente))) {
+        payloadEnvio.id = Number(idExistente);
+      } else {
+        payloadEnvio.created_at = new Date().toISOString();
+      }
+
+      const resp = await fetch(`${supUrl}/rest/v1/${this.TABELA}`, {
+        method: 'POST',
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=representation'
+        },
+        body: JSON.stringify([payloadEnvio])
+      });
+
+      if (resp.ok) {
+        const resJson = await resp.json();
+        if (Array.isArray(resJson) && resJson.length > 0) {
+          return { sucesso: true, id: resJson[0].id, data: resJson[0] };
+        }
+      } else {
+        const errTxt = await resp.text();
+        console.warn("REST direto retornou erro ao salvar:", resp.status, errTxt);
+      }
+    } catch (e) {
+      console.warn("Falha no REST direto ao salvar demanda:", e);
+    }
+
+    // 2. Fallback via SDK SupabaseClient
     try {
       if (idExistente && !isNaN(Number(idExistente))) {
         // Atualizar demanda existente no Supabase via upsert (POST)
@@ -105,31 +142,53 @@ const demandasSupabase = {
    * Lista demandas salvas no Supabase
    */
   async listarDemandas(filtroStatus = "todos") {
-    if (!window.supabaseClient) {
-      console.warn("SupabaseClient não está disponível.");
-      return null;
-    }
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
 
+    // 1. Tenta via REST API direta nativa (livre de estado de sessão, mais rápida e 100% confiável)
     try {
-      let query = window.supabaseClient
-        .from(this.TABELA)
-        .select("*")
-        .order("created_at", { ascending: false });
-
+      let url = `${supUrl}/rest/v1/${this.TABELA}?select=*&order=created_at.desc`;
       if (filtroStatus && filtroStatus !== "todos") {
-        query = query.eq("status", filtroStatus);
+        url += `&status=eq.${encodeURIComponent(filtroStatus)}`;
       }
-
-      const { data, error } = await query;
-      if (error) {
-        console.error("Erro ao carregar demandas do Supabase:", error);
-        return null;
+      const resp = await fetch(url, {
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`
+        }
+      });
+      if (resp.ok) {
+        const dados = await resp.json();
+        if (Array.isArray(dados)) {
+          return dados;
+        }
+      } else {
+        console.warn("REST direto retornou erro ao listar:", resp.status);
       }
-      return data || [];
-    } catch (err) {
-      console.error("Exceção ao listar demandas do Supabase:", err);
-      return null;
+    } catch (e) {
+      console.warn("REST direto falhou, tentando cliente Supabase:", e);
     }
+
+    // 2. Fallback via SDK SupabaseClient
+    if (window.supabaseClient) {
+      try {
+        let query = window.supabaseClient
+          .from(this.TABELA)
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (filtroStatus && filtroStatus !== "todos") {
+          query = query.eq("status", filtroStatus);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) return data;
+      } catch (err) {
+        console.error("Exceção ao listar demandas do Supabase:", err);
+      }
+    }
+
+    return null;
   },
 
   /**
