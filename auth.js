@@ -1,39 +1,57 @@
 /**
  * auth.js - Sistema de Autenticação e Moderação de Acessos
  * Sistema de Demandas de Licitação (DFD) — Instituto de Artes e Design / UFJF
- * 100% Compatível e Integrado com a Secretaria Virtual e PIT-RIT via Supabase
+ * 100% Integrado ao Supabase (Tabela: secretaria_usuarios)
  */
 
 const authService = {
   SESSION_KEY: "secretaria_usuario_logado_v1",
   FALLBACK_USERS_KEY: "secretaria_usuarios_locais_v1",
 
-  // Hashes SHA-256 padrão
-  HASH_ADMIN_123: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", // "admin123"
+  // Hash SHA-256 padrão de contingência para a senha "000000"
   HASH_ADMIN_000: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203", // "000000"
 
-  // Usuários pré-cadastrados da equipe do IAD / UFJF
+  // Os 3 únicos administradores do sistema
+  ADMIN_EMAILS: [
+    "felipe.braga@ufjf.br",
+    "josue.ferreira@ufjf.br",
+    "andre.xando@ufjf.br"
+  ],
+
+  // Usuários padrão da equipe do IAD / UFJF
   DEFAULT_USERS: [
     {
-      id: "admin-secretaria-iad",
+      id: "b6af7666-a7dc-400f-bffb-e1daa12ffb52",
       nome: "Felipe Bruno Braga de Melo",
-      email: "admin@iad.ufjf.br",
-      aliases: ["felipe.melo@ufjf.br", "felipe.braga@ufjf.br", "admin", "admin01", "felipe"],
-      siape: "ADMIN01",
-      senha_hash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      email: "felipe.braga@ufjf.br",
+      aliases: ["felipe.braga", "felipe", "felipe.melo@ufjf.br"],
+      siape: "2393476",
+      senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
       cargo: "Administrador",
       setor: "Secretaria",
       status: "aprovado",
       is_admin: true
     },
     {
-      id: "user-secretaria-geral",
-      nome: "Secretaria do IAD",
-      email: "secretaria@iad.ufjf.br",
-      aliases: ["secretaria", "sec", "secretaria01"],
-      siape: "SECRETARIA01",
+      id: "d5eb4849-fff7-4ef1-b51d-f501713fcf34",
+      nome: "Josué Ferreira",
+      email: "josue.ferreira@ufjf.br",
+      aliases: ["josue.ferreira", "josue"],
+      siape: "JOSUE01",
       senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
-      cargo: "Secretaria",
+      cargo: "Administrador",
+      setor: "Secretaria",
+      status: "aprovado",
+      is_admin: true
+    },
+    {
+      id: "30a89fd4-de25-47db-b186-adafaab4510c",
+      nome: "André Xandó",
+      email: "andre.xando@ufjf.br",
+      aliases: ["andre.xando", "andre"],
+      siape: "ANDRE01",
+      senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
+      cargo: "Administrador",
       setor: "Secretaria",
       status: "aprovado",
       is_admin: true
@@ -63,54 +81,28 @@ const authService = {
       is_admin: false
     },
     {
-      id: "user-josue-ferreira",
-      nome: "Josué Ferreira",
-      email: "josue.ferreira@ufjf.br",
-      aliases: ["josue.ferreira", "josue"],
-      siape: "JOSUE01",
-      senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
-      cargo: "Secretaria",
-      setor: "Secretaria",
-      status: "aprovado",
-      is_admin: false
-    },
-    {
       id: "user-hermenegildo-giovannoni",
       nome: "Hermenegildo Ferreira Giovannoni",
       email: "hermenegildo.giovannoni@ufjf.br",
       aliases: ["hermegildo.giovannoni", "hermenegildo"],
-      siape: "HERMENEGILDO01",
+      siape: "2136713",
       senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
-      cargo: "Secretaria",
+      cargo: "Técnico Administrativo",
       setor: "Secretaria",
-      status: "aprovado",
-      is_admin: false
-    },
-    {
-      id: "user-andre-xando",
-      nome: "André Xandó",
-      email: "andre.xando@ufjf.br",
-      aliases: ["andre.xando", "andre"],
-      siape: "ANDRE01",
-      senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
-      cargo: "Secretaria",
-      setor: "Secretaria",
-      status: "aprovado",
-      is_admin: false
-    },
-    {
-      id: "user-docente-exemplo",
-      nome: "Prof. Carlos Eduardo Mendes",
-      email: "professor@iad.ufjf.br",
-      aliases: ["professor", "docente", "carlos.mendes"],
-      siape: "DOCENTE01",
-      senha_hash: "91b4d142823f7d20c5f08df69122de43f35f057a988d9619f6d3138485c9a203",
-      cargo: "Docente",
-      setor: "Artes Visuais",
       status: "aprovado",
       is_admin: false
     }
   ],
+
+  /**
+   * Verifica se um usuário ou e-mail é Administrador
+   */
+  isUsuarioAdmin(usuario) {
+    if (!usuario) return false;
+    if (usuario.is_admin === true) return true;
+    const email = (usuario.email || "").toLowerCase().trim();
+    return this.ADMIN_EMAILS.includes(email);
+  },
 
   /**
    * Gera hash SHA-256 nativo da Web Crypto API
@@ -139,7 +131,15 @@ const authService = {
     try {
       const str = sessionStorage.getItem(this.SESSION_KEY) || localStorage.getItem(this.SESSION_KEY);
       if (str) {
-        return JSON.parse(str);
+        const u = JSON.parse(str);
+        if (this.isUsuarioAdmin(u)) {
+          u.is_admin = true;
+          const emailLower = (u.email || "").toLowerCase().trim();
+          if (emailLower === "felipe.braga@ufjf.br") u.id = "b6af7666-a7dc-400f-bffb-e1daa12ffb52";
+          else if (emailLower === "josue.ferreira@ufjf.br") u.id = "d5eb4849-fff7-4ef1-b51d-f501713fcf34";
+          else if (emailLower === "andre.xando@ufjf.br") u.id = "30a89fd4-de25-47db-b186-adafaab4510c";
+        }
+        return u;
       }
     } catch (e) {
       console.warn("Erro ao ler sessão:", e);
@@ -153,7 +153,10 @@ const authService = {
   salvarSessao(usuario, manterConectado = true) {
     try {
       const seguro = { ...usuario };
-      delete seguro.senha_hash; // Nunca salva a senha no armazenamento local
+      if (this.isUsuarioAdmin(seguro)) {
+        seguro.is_admin = true;
+      }
+      delete seguro.senha_hash; // Nunca salva a senha no client-side
       const json = JSON.stringify(seguro);
       sessionStorage.setItem(this.SESSION_KEY, json);
       if (manterConectado) {
@@ -205,6 +208,12 @@ const authService = {
       if (idx === -1) {
         locais.push({ ...defUser });
         alterado = true;
+      } else {
+        // Atualiza status de administrador
+        if (this.isUsuarioAdmin(defUser)) {
+          locais[idx].is_admin = true;
+          locais[idx].cargo = "Administrador";
+        }
       }
     });
 
@@ -285,33 +294,18 @@ const authService = {
   },
 
   /**
-   * Preenchimento rápido para Administrador
+   * Atalho de preenchimento rápido para Administradores
    */
-  preencherLoginAdmin() {
+  preencherLoginAdmin(emailAdmin) {
     this.alternarAuthTab("login");
     const loginId = document.getElementById("loginId");
     const loginSenha = document.getElementById("loginSenha");
-    if (loginId) loginId.value = "admin@iad.ufjf.br";
-    if (loginSenha) {
-      loginSenha.value = "admin123";
-      loginSenha.focus();
-    }
-    this.exibirAuthAlert("info", "Acesso Administrador configurado (admin@iad.ufjf.br / admin123). Clique em 'Entrar no Sistema'.");
-  },
-
-  /**
-   * Preenchimento rápido para Secretaria Geral
-   */
-  preencherLoginSecretaria() {
-    this.alternarAuthTab("login");
-    const loginId = document.getElementById("loginId");
-    const loginSenha = document.getElementById("loginSenha");
-    if (loginId) loginId.value = "secretaria@iad.ufjf.br";
+    if (loginId) loginId.value = emailAdmin || "felipe.braga@ufjf.br";
     if (loginSenha) {
       loginSenha.value = "000000";
       loginSenha.focus();
     }
-    this.exibirAuthAlert("info", "Acesso Secretaria configurado (secretaria@iad.ufjf.br / 000000). Clique em 'Entrar no Sistema'.");
+    this.exibirAuthAlert("info", `Administrador selecionado (${loginId.value}). Senha preenchida (000000). Clique em 'Entrar no Sistema'.`);
   },
 
   /**
@@ -325,61 +319,49 @@ const authService = {
     const idLimpo = identificador.trim().toLowerCase();
     const senhaHash = await this.hashSenha(senha);
 
-    // 1. Verificação do Administrador Padrão da Secretaria do IAD
-    const isAdminIdentifier = (
-      idLimpo === "admin@iad.ufjf.br" ||
-      idLimpo === "admin" ||
-      idLimpo === "admin01" ||
-      idLimpo === "felipe" ||
-      idLimpo === "felipe.melo@ufjf.br" ||
-      idLimpo === "felipe.braga@ufjf.br"
-    );
-
-    const isAdminPassword = (
-      senhaHash === this.HASH_ADMIN_123 ||
-      senhaHash === this.HASH_ADMIN_000 ||
-      senha === "admin123" ||
-      senha === "000000"
-    );
-
-    if (isAdminIdentifier && isAdminPassword) {
-      const adminUser = {
-        id: "admin-secretaria-iad",
+    // 1. Verificação direta dos 3 Administradores Oficiais
+    let adminMatch = null;
+    if (idLimpo === "felipe.braga@ufjf.br" || idLimpo === "felipe.braga" || idLimpo === "felipe" || idLimpo === "2393476") {
+      adminMatch = {
+        id: "b6af7666-a7dc-400f-bffb-e1daa12ffb52",
         nome: "Felipe Bruno Braga de Melo",
-        email: "admin@iad.ufjf.br",
-        siape: "ADMIN01",
+        email: "felipe.braga@ufjf.br",
+        siape: "2393476",
         cargo: "Administrador",
         setor: "Secretaria",
         status: "aprovado",
         is_admin: true
       };
-      this.salvarSessao(adminUser);
-      return { success: true, usuario: adminUser };
-    }
-
-    // 2. Verificação da conta institucional Secretaria do IAD
-    const isSecIdentifier = (
-      idLimpo === "secretaria@iad.ufjf.br" ||
-      idLimpo === "secretaria" ||
-      idLimpo === "sec" ||
-      idLimpo === "secretaria01"
-    );
-    if (isSecIdentifier && (senhaHash === this.HASH_ADMIN_000 || senhaHash === this.HASH_ADMIN_123 || senha === "000000" || senha === "admin123")) {
-      const secUser = {
-        id: "user-secretaria-geral",
-        nome: "Secretaria do IAD",
-        email: "secretaria@iad.ufjf.br",
-        siape: "SECRETARIA01",
-        cargo: "Secretaria",
+    } else if (idLimpo === "josue.ferreira@ufjf.br" || idLimpo === "josue.ferreira" || idLimpo === "josue" || idLimpo === "josue01") {
+      adminMatch = {
+        id: "d5eb4849-fff7-4ef1-b51d-f501713fcf34",
+        nome: "Josué Ferreira",
+        email: "josue.ferreira@ufjf.br",
+        siape: "JOSUE01",
+        cargo: "Administrador",
         setor: "Secretaria",
         status: "aprovado",
         is_admin: true
       };
-      this.salvarSessao(secUser);
-      return { success: true, usuario: secUser };
+    } else if (idLimpo === "andre.xando@ufjf.br" || idLimpo === "andre.xando" || idLimpo === "andre" || idLimpo === "andre01") {
+      adminMatch = {
+        id: "30a89fd4-de25-47db-b186-adafaab4510c",
+        nome: "André Xandó",
+        email: "andre.xando@ufjf.br",
+        siape: "ANDRE01",
+        cargo: "Administrador",
+        setor: "Secretaria",
+        status: "aprovado",
+        is_admin: true
+      };
     }
 
-    // 3. Consulta no Supabase (tabela secretaria_usuarios)
+    if (adminMatch && (senha === "000000" || senhaHash === this.HASH_ADMIN_000 || senha === "admin123")) {
+      this.salvarSessao(adminMatch);
+      return { success: true, usuario: adminMatch };
+    }
+
+    // 2. Consulta no Supabase (tabela secretaria_usuarios)
     let usuarioEncontrado = null;
     if (window.supabaseClient) {
       try {
@@ -397,7 +379,7 @@ const authService = {
       }
     }
 
-    // 4. Contingência: busca em usuários locais
+    // 3. Contingência: busca em usuários locais
     if (!usuarioEncontrado) {
       const locais = this._obterUsuariosLocais();
       usuarioEncontrado = locais.find(u => {
@@ -417,8 +399,7 @@ const authService = {
 
     // Validação da senha
     const senhaValida = (usuarioEncontrado.senha_hash === senhaHash) ||
-      (senha === "admin123" && (usuarioEncontrado.senha_hash === this.HASH_ADMIN_123 || usuarioEncontrado.is_admin)) ||
-      (senha === "000000" && (usuarioEncontrado.senha_hash === this.HASH_ADMIN_000 || usuarioEncontrado.senha_hash === this.HASH_ADMIN_123));
+      (senha === "000000" && (usuarioEncontrado.senha_hash === this.HASH_ADMIN_000 || this.isUsuarioAdmin(usuarioEncontrado)));
 
     if (!senhaValida) {
       return { success: false, message: "Senha incorreta. Tente novamente." };
@@ -440,6 +421,12 @@ const authService = {
       };
     }
 
+    // Garante flag is_admin se estiver na lista dos 3 administradores
+    if (this.isUsuarioAdmin(usuarioEncontrado)) {
+      usuarioEncontrado.is_admin = true;
+      usuarioEncontrado.cargo = "Administrador";
+    }
+
     // Login com sucesso!
     this.salvarSessao(usuarioEncontrado);
     return { success: true, usuario: usuarioEncontrado };
@@ -453,8 +440,8 @@ const authService = {
       return { success: false, message: "Preencha todos os campos obrigatórios." };
     }
 
-    if (!dados.email.includes("@ufjf.br") && !dados.email.includes("@iad.ufjf.br")) {
-      return { success: false, message: "Utilize preferencialmente seu e-mail institucional (@ufjf.br)." };
+    if (!dados.email.includes("@ufjf.br")) {
+      return { success: false, message: "Utilize obrigatoriamente seu e-mail institucional (@ufjf.br)." };
     }
 
     const senhaHash = await this.hashSenha(dados.senha);
@@ -509,7 +496,7 @@ const authService = {
 
     return {
       success: true,
-      message: "Solicitação de cadastro enviada com sucesso! Aguarde a moderação e aprovação da Secretaria do IAD para realizar o login."
+      message: "Solicitação de cadastro enviada com sucesso! Aguarde a moderação e aprovação da administração para realizar o login."
     };
   },
 
@@ -554,7 +541,6 @@ const authService = {
       } catch (e) {}
     }
 
-    // Atualiza local
     const locais = this._obterUsuariosLocais();
     const idx = locais.findIndex(u => u.id === userId || u.email === userId);
     if (idx !== -1) {
@@ -576,7 +562,6 @@ const authService = {
       } catch (e) {}
     }
 
-    // Atualiza local
     const locais = this._obterUsuariosLocais();
     const idx = locais.findIndex(u => u.id === userId || u.email === userId);
     if (idx !== -1) {
@@ -601,7 +586,7 @@ const authService = {
     const userWidget = document.getElementById("headerUserWidget");
     if (userWidget) {
       const nomeCurto = usuario.nome ? usuario.nome.split(" ")[0] : "Usuário";
-      const isAdmin = usuario.is_admin === true || usuario.email === "admin@iad.ufjf.br";
+      const isAdmin = this.isUsuarioAdmin(usuario);
 
       userWidget.innerHTML = `
         <div class="user-profile-badge" title="${usuario.nome} (${usuario.email})">
@@ -610,7 +595,7 @@ const authService = {
           </div>
           <div class="user-profile-text">
             <span class="user-profile-name">${nomeCurto}</span>
-            <span class="user-profile-role">${isAdmin ? "Admin" : (usuario.cargo || "Solicitante")} &bull; ${usuario.setor || "IAD"}</span>
+            <span class="user-profile-role">${isAdmin ? "Administrador" : (usuario.cargo || "Solicitante")} &bull; ${usuario.setor || "IAD"}</span>
           </div>
         </div>
         ${isAdmin ? `
@@ -651,7 +636,6 @@ const authService = {
       campoEmail.value = usuario.email || "";
     }
     if (campoSetor && (!campoSetor.value || campoSetor.value.trim() === "")) {
-      // Tentar casar com as opções existentes
       if (usuario.setor) {
         for (let i = 0; i < campoSetor.options.length; i++) {
           if (campoSetor.options[i].value.toLowerCase().includes(usuario.setor.toLowerCase()) ||
@@ -728,18 +712,20 @@ const authService = {
         statusLabel = "Rejeitado";
       }
 
+      const isAdmin = authService.isUsuarioAdmin(u);
+
       html += `
         <tr>
-          <td><strong>${u.nome}</strong> ${u.is_admin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700;">Admin</span>' : ''}</td>
+          <td><strong>${u.nome}</strong> ${isAdmin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">Admin</span>' : ''}</td>
           <td>${u.email}</td>
           <td>${u.siape || "-"}</td>
           <td>${u.cargo || "-"} &bull; ${u.setor || "-"}</td>
           <td><span class="status-pill ${badgeClass}">${statusLabel}</span></td>
           <td style="text-align: center; white-space: nowrap;">
-            ${u.status !== "aprovado" ? `
+            ${!isAdmin && u.status !== "aprovado" ? `
               <button type="button" class="btn-mod-action btn-mod-approve" onclick="authService.executarAprovacao('${u.id || u.email}')" title="Aprovar Usuário">✓ Aprovar</button>
             ` : ''}
-            ${u.status !== "rejeitado" ? `
+            ${!isAdmin && u.status !== "rejeitado" ? `
               <button type="button" class="btn-mod-action btn-mod-reject" onclick="authService.executarRejeicao('${u.id || u.email}')" title="Rejeitar / Bloquear Usuário">✕ Rejeitar</button>
             ` : ''}
           </td>
@@ -789,7 +775,7 @@ async function handleLoginSubmit(event) {
   try {
     const res = await authService.login(loginId, loginSenha);
     if (res.success) {
-      authService.exibirAuthAlert("success", `Bem-vindo(a), ${res.usuario.nome}! Redirecionando...`);
+      authService.exibirAuthAlert("success", `Bem-vindo(a), ${res.usuario.nome}! Conectando ao sistema...`);
       setTimeout(() => {
         authService.atualizarInterfaceUsuario();
         if (typeof carregarHistoricoSolicitacoes === "function") {

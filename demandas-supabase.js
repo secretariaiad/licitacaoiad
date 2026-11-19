@@ -1,6 +1,6 @@
 /**
  * demandas-supabase.js - Camada de Integração de Demandas de Licitação com Supabase
- * Suporta persistência em nuvem em tempo real com fallback automático para LocalStorage.
+ * Tabela Oficial: demandas_dfd (Persistência em Nuvem Compartilhada em Tempo Real)
  */
 
 const demandasSupabase = {
@@ -11,12 +11,17 @@ const demandasSupabase = {
    */
   async salvarDemanda(dados, idExistente = null) {
     if (!window.supabaseClient) {
-      console.warn("Supabase não disponível. Usando fallback local.");
-      return null;
+      return { sucesso: false, erro: "Conexão com o Supabase indisponível." };
     }
 
-    const usuarioLogado = authService ? authService.obterSessao() : null;
-    const totalDemanda = dados.itens.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
+    const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
+    const totalDemanda = dados.itens.reduce((acc, it) => acc + (Number(it.quantidade || 0) * Number(it.valor_unitario || 0)), 0);
+
+    // Valida se usuario_id é um UUID válido (36 chars com hífens)
+    let validUserId = null;
+    if (usuarioLogado?.id && typeof usuarioLogado.id === 'string' && usuarioLogado.id.length === 36 && usuarioLogado.id.includes('-')) {
+      validUserId = usuarioLogado.id;
+    }
 
     const payload = {
       nome_solicitante: dados.solicitante.nome,
@@ -36,31 +41,34 @@ const demandasSupabase = {
         subelemento: it.subelemento,
         desc_subelemento: it.desc_subelemento,
         unidade: it.unidade,
-        quantidade: it.quantidade,
-        valor_unitario: it.valor_unitario,
-        valor_total: it.quantidade * it.valor_unitario,
+        quantidade: Number(it.quantidade || 1),
+        valor_unitario: Number(it.valor_unitario || 0),
+        valor_total: Number(it.quantidade || 1) * Number(it.valor_unitario || 0),
         prioridade: it.prioridade || 'Média',
         links: it.links || '',
         justificativa: it.justificativa || '',
         especificacoes: it.especificacoes || it.observacoes || ''
       })),
-      usuario_id: usuarioLogado?.id && usuarioLogado.id.length === 36 ? usuarioLogado.id : null,
+      usuario_id: validUserId,
       updated_at: new Date().toISOString()
     };
 
     try {
       if (idExistente) {
-        // Atualizar demanda existente
+        // Atualizar demanda existente no Supabase
         const { data, error } = await window.supabaseClient
           .from(this.TABELA)
           .update(payload)
           .eq("id", idExistente)
           .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao atualizar no Supabase:", error);
+          return { sucesso: false, erro: error.message };
+        }
         return { sucesso: true, id: idExistente, data: data ? data[0] : null, atualizado: true };
       } else {
-        // Inserir nova demanda
+        // Inserir nova demanda no Supabase
         payload.status = 'Cadastrada';
         payload.created_at = new Date().toISOString();
 
@@ -69,13 +77,16 @@ const demandasSupabase = {
           .insert([payload])
           .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Erro ao inserir no Supabase:", error);
+          return { sucesso: false, erro: error.message };
+        }
         const novoRegistro = data && data.length > 0 ? data[0] : null;
         return { sucesso: true, id: novoRegistro?.id || null, data: novoRegistro };
       }
     } catch (err) {
-      console.warn("Erro ao salvar demanda no Supabase (verifique se a tabela 'demandas_dfd' foi criada):", err.message);
-      return null;
+      console.error("Exceção ao salvar demanda no Supabase:", err);
+      return { sucesso: false, erro: err.message };
     }
   },
 
@@ -83,7 +94,10 @@ const demandasSupabase = {
    * Lista demandas salvas no Supabase
    */
   async listarDemandas(filtroStatus = "todos") {
-    if (!window.supabaseClient) return null;
+    if (!window.supabaseClient) {
+      console.warn("SupabaseClient não está disponível.");
+      return null;
+    }
 
     try {
       let query = window.supabaseClient
@@ -96,10 +110,13 @@ const demandasSupabase = {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao carregar demandas do Supabase:", error);
+        return null;
+      }
       return data || [];
     } catch (err) {
-      console.warn("Aviso ao carregar demandas do Supabase:", err.message);
+      console.error("Exceção ao listar demandas do Supabase:", err);
       return null;
     }
   },
@@ -124,7 +141,10 @@ const demandasSupabase = {
         .update(updatePayload)
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar status:", error);
+        return false;
+      }
       return true;
     } catch (err) {
       console.error("Erro ao atualizar status da demanda:", err);
@@ -149,6 +169,73 @@ const demandasSupabase = {
     } catch (err) {
       console.error("Erro ao excluir demanda do Supabase:", err);
       return false;
+    }
+  },
+
+  /**
+   * Sincroniza demandas antigas salvas localmente para a nuvem
+   */
+  async sincronizarDemandasLocaisParaNuvem() {
+    if (!window.supabaseClient) return;
+
+    try {
+      const localStr = localStorage.getItem("solicitacoes_iad");
+      if (!localStr) return;
+      const locais = JSON.parse(localStr);
+      if (!Array.isArray(locais) || locais.length === 0) return;
+
+      // Busca IDs existentes no Supabase
+      const existentes = await this.listarDemandas();
+      if (existentes === null) return; // Supabase offline, não faz nada
+
+      let sincronizadas = 0;
+      for (const loc of locais) {
+        // Se a demanda local tem justificativa e itens, mas não está no Supabase
+        const jaExiste = existentes.some(e => 
+          (e.nome_solicitante === loc.nome_solicitante && e.siape === loc.siape && e.justificativa === loc.justificativa)
+        );
+
+        if (!jaExiste && loc.nome_solicitante && Array.isArray(loc.itens) && loc.itens.length > 0) {
+          const dadosMigracao = {
+            solicitante: {
+              nome: loc.nome_solicitante,
+              setor: loc.setor_solicitante,
+              siape: loc.siape,
+              email: loc.email,
+              categoria: loc.categoria || "Consumo",
+              justificativa: loc.justificativa || "Demanda migrada do armazenamento local"
+            },
+            itens: loc.itens.map(it => ({
+              codigo: it.codigo,
+              descricao: it.descricao,
+              elemento: it.elemento,
+              desc_elemento: it.desc_elemento,
+              subelemento: it.subelemento,
+              desc_subelemento: it.desc_subelemento,
+              unidade: it.unidade,
+              quantidade: it.quantidade,
+              valor_unitario: it.valor_unitario || it.valor_unitario_estimado || 0,
+              prioridade: it.prioridade || 'Média',
+              links: it.links || '',
+              justificativa: it.justificativa || '',
+              especificacoes: it.especificacoes || it.observacoes || ''
+            }))
+          };
+          const res = await this.salvarDemanda(dadosMigracao);
+          if (res && res.sucesso) {
+            sincronizadas++;
+          }
+        }
+      }
+
+      if (sincronizadas > 0) {
+        console.log(`✓ ${sincronizadas} demandas locais foram sincronizadas com a nuvem (Supabase)!`);
+        if (typeof mostrarToast === "function") {
+          mostrarToast(`✓ ${sincronizadas} demandas que estavam salvas localmente foram sincronizadas com a nuvem!`, "success");
+        }
+      }
+    } catch (e) {
+      console.warn("Aviso na sincronização de demandas locais:", e);
     }
   }
 };

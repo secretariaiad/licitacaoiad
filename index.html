@@ -966,9 +966,16 @@
               <span>Lembrar de mim</span>
             </label>
             <div style="display: flex; gap: 0.75rem;">
-              <a href="javascript:void(0)" onclick="authService.preencherLoginAdmin()" style="font-size: 0.8rem; color: #1e3a8a; text-decoration: none; font-weight: 600;">
-                Acesso Administrador
-              </a>
+              <div style="position:relative; display:inline-block;">
+                <a href="javascript:void(0)" onclick="document.getElementById('menuAdmins').style.display=document.getElementById('menuAdmins').style.display==='block'?'none':'block'" style="font-size: 0.8rem; color: #1e3a8a; text-decoration: none; font-weight: 600;">
+                  Acesso Administrador ▾
+                </a>
+                <div id="menuAdmins" style="display:none; position:absolute; right:0; top:1.4rem; background:#fff; border:1px solid #c7d2fe; border-radius:0.5rem; box-shadow:0 4px 12px rgba(0,0,0,.12); min-width:220px; z-index:9999; padding:0.35rem 0;">
+                  <div onclick="authService.preencherLoginAdmin('felipe.braga@ufjf.br');document.getElementById('menuAdmins').style.display='none'" style="padding:0.5rem 1rem; cursor:pointer; font-size:0.82rem; color:#1e293b;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background=''">Felipe Braga</div>
+                  <div onclick="authService.preencherLoginAdmin('josue.ferreira@ufjf.br');document.getElementById('menuAdmins').style.display='none'" style="padding:0.5rem 1rem; cursor:pointer; font-size:0.82rem; color:#1e293b;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background=''">Josué Ferreira</div>
+                  <div onclick="authService.preencherLoginAdmin('andre.xando@ufjf.br');document.getElementById('menuAdmins').style.display='none'" style="padding:0.5rem 1rem; cursor:pointer; font-size:0.82rem; color:#1e293b;" onmouseover="this.style.background='#eef2ff'" onmouseout="this.style.background=''">André Xandó</div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1503,6 +1510,13 @@
 
       // Restaurar rascunho anterior se existir
       restaurarRascunhoAutomatico();
+
+      // Sincronizar demandas locais antigas para o Supabase (garante que tudo vá para a nuvem)
+      if (typeof demandasSupabase !== "undefined" && typeof demandasSupabase.sincronizarDemandasLocaisParaNuvem === "function") {
+        demandasSupabase.sincronizarDemandasLocaisParaNuvem().catch(err => {
+          console.warn("Aviso na sincronização de demandas:", err);
+        });
+      }
     });
 
     async function carregarCatalogoEstatico() {
@@ -2125,13 +2139,16 @@
         // Limpar rascunho após salvar com sucesso
         localStorage.removeItem(KEY_RASCUNHO);
 
-        const msgSucesso = salvouSupabase 
-          ? `Demanda nº ${registroId} ${demandaEmEdicaoId ? "atualizada" : "cadastrada"} na nuvem (Supabase) com sucesso!`
-          : `Demanda nº ${registroId} ${demandaEmEdicaoId ? "atualizada" : "salva"} com sucesso!`;
-        mostrarToast(msgSucesso, "success");
+        if (!salvouSupabase && modoEstatico) {
+          mostrarToast(`Atenção: Não foi possível sincronizar com o Supabase. Demanda nº ${registroId} salva temporariamente apenas neste navegador!`, "warning");
+        } else {
+          const msgSucesso = `Demanda nº ${registroId} ${demandaEmEdicaoId ? "atualizada" : "cadastrada"} no Supabase com sucesso! Todos os administradores têm acesso.`;
+          mostrarToast(msgSucesso, "success");
+        }
         demandaEmEdicaoId = null;
         limparFormulario();
         mostrarAba("historico");
+        await carregarHistoricoSolicitacoes();
       } catch (err) {
         console.error(err);
         mostrarToast("Erro ao salvar solicitação: " + err.message, "error");
@@ -2307,7 +2324,7 @@
       tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Carregando solicitações...</p></td></tr>`;
 
       const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
-      const isAdminOuSec = usuarioLogado && (usuarioLogado.is_admin || usuarioLogado.cargo === 'Secretaria' || usuarioLogado.setor === 'Secretaria' || usuarioLogado.email === 'admin@iad.ufjf.br');
+      const isAdminOuSec = usuarioLogado && (usuarioLogado.is_admin || (typeof authService !== "undefined" && authService.isUsuarioAdmin(usuarioLogado)));
 
       let sols = [];
 
@@ -2359,6 +2376,16 @@
         } catch (e) {
           sols = [];
         }
+      }
+
+      // Se não for administrador, filtra apenas as próprias demandas cadastradas
+      if (!isAdminOuSec && usuarioLogado && usuarioLogado.email) {
+        const emailLogado = (usuarioLogado.email || "").toLowerCase().trim();
+        const siapeLogado = (usuarioLogado.siape || "").trim();
+        sols = sols.filter(s => 
+          (s.email && s.email.toLowerCase().trim() === emailLogado) ||
+          (siapeLogado && s.siape && s.siape.trim() === siapeLogado)
+        );
       }
 
       if (!sols || sols.length === 0) {
