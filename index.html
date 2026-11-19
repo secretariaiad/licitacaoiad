@@ -1,0 +1,2806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitação de Compras de Materiais &mdash; IAD/UFJF</title>
+  
+  <!-- Fontes e Ícones -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="demandas-supabase.js"></script>
+  <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
+  <script src="itens_catalogo.js"></script>
+
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --primary-light: #eff6ff;
+      --accent: #2563eb;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --radius: 8px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1.25rem 2rem;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-icon {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 0.6rem;
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 0.825rem;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .auto-save-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      color: #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .auto-save-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 0.25rem;
+      border-radius: var(--radius);
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .nav-tab-btn.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-tab-btn:hover:not(.active) {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* CONTAINER */
+    main {
+      flex: 1;
+      max-width: 1240px;
+      width: 100%;
+      margin: 1.75rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+      overflow: visible;
+    }
+
+    .card-header {
+      padding: 1.15rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    /* FORM ELEMENTS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.25rem;
+    }
+
+    .col-2 { grid-column: span 2; }
+    .col-3 { grid-column: span 3; }
+    .col-4 { grid-column: span 4; }
+    .col-5 { grid-column: span 5; }
+    .col-6 { grid-column: span 6; }
+    .col-7 { grid-column: span 7; }
+    .col-8 { grid-column: span 8; }
+    .col-12 { grid-column: span 12; }
+
+    @media (max-width: 900px) {
+      .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8 { grid-column: span 12; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    label .required {
+      color: var(--danger);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* AUTOCOMPLETE CONTAINER */
+    .autocomplete-wrapper {
+      position: relative;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-input-wrapper input {
+      padding-left: 2.75rem;
+      font-size: 0.95rem;
+      border: 2px solid #cbd5e1;
+    }
+
+    .search-input-wrapper input:focus {
+      border-color: var(--accent);
+    }
+
+    .suggestions-box {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 6px;
+      max-height: 430px;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08);
+      z-index: 999999;
+      display: none;
+    }
+
+    .suggestion-item {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item:hover, .suggestion-item.highlighted {
+      background-color: var(--primary-light);
+    }
+
+    .suggestion-main {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--primary-hover);
+      margin-bottom: 0.25rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .suggestion-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 0.75rem;
+    }
+
+    .badge-primary { background: #dbeafe; color: #1e40af; }
+    .badge-secondary { background: #e2e8f0; color: #475569; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-subelem { background: #f3e8ff; color: #6b21a8; }
+
+    /* BADGES DE PRIORIDADE */
+    .badge-prio-alta { background: #fee2e2; color: #b91c1c; font-weight: 600; }
+    .badge-prio-media-alta { background: #ffedd5; color: #c2410c; font-weight: 600; }
+    .badge-prio-media { background: #fef9c3; color: #854d0e; font-weight: 600; }
+    .badge-prio-media-baixa { background: #e0f2fe; color: #0369a1; font-weight: 600; }
+    .badge-prio-baixa { background: #f1f5f9; color: #475569; font-weight: 600; }
+
+    /* AUTO-PULLED ITEM DETAILS PREVIEW */
+    .selected-preview {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .selected-preview.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .preview-header h4 {
+      font-size: 0.95rem;
+      color: var(--primary);
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .preview-field {
+      background: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .preview-field .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .preview-field .value {
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 2px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #15803d;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border);
+      color: #334155;
+    }
+
+    .btn-outline:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    .btn-danger-sm {
+      background: #fee2e2;
+      color: var(--danger);
+      border: none;
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .btn-danger-sm:hover {
+      background: #fecaca;
+    }
+
+    .btn-lg {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    /* TABLES */
+    .items-table-wrapper {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 1rem;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .items-table th {
+      background: #f8fafc;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .items-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .items-table tbody tr:hover {
+      background: #f8fafc;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state p {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    /* TOTAL BANNER */
+    .total-banner {
+      background: #f8fafc;
+      border-top: 2px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-card {
+      background: white;
+      border-radius: var(--radius);
+      max-width: 860px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* TOAST ALERT */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      padding: 1rem 1.5rem;
+      background: #1e293b;
+      color: white;
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 9999999;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { background: #065f46; }
+    .toast.error { background: #991b1b; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      background: white;
+      margin-top: auto;
+    }
+    /* ==========================================================================
+       LOGIN & AUTENTICAÇÃO (MOLDES SECRETARIA VIRTUAL / PIT-RIT)
+       ========================================================================== */
+    .auth-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.88);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .auth-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .auth-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      max-height: calc(100vh - 2.5rem);
+      display: flex;
+      flex-direction: column;
+      margin: auto;
+      border-radius: 1.25rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      overflow: hidden;
+      animation: authFadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #1e293b;
+    }
+
+    @keyframes authFadeUp {
+      from { transform: translateY(20px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .auth-header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      color: #ffffff;
+      padding: 1.5rem 1.5rem 1.25rem;
+      text-align: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .auth-header .header-logo-badge {
+      display: inline-block;
+      background: #ffffff;
+      color: #1e3a8a;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.75rem;
+      border-radius: 9999px;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+    }
+
+    .auth-header h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      color: #ffffff;
+    }
+
+    .auth-header p {
+      font-size: 0.85rem;
+      color: #dbeafe;
+      margin: 0;
+    }
+
+    .auth-tabs {
+      display: flex;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      padding: 0.85rem 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      transition: 0.2s ease;
+      border-bottom: 3px solid transparent;
+    }
+
+    .auth-tab-btn.active {
+      color: #1e3a8a;
+      background: #ffffff;
+      border-bottom-color: #1e3a8a;
+    }
+
+    .auth-body {
+      padding: 1.5rem;
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+
+    .auth-form-group {
+      margin-bottom: 0.95rem;
+      text-align: left;
+    }
+
+    .auth-form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 0.35rem;
+    }
+
+    .auth-form-group input,
+    .auth-form-group select {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background-color: #ffffff;
+      color: #1e293b;
+      transition: 0.2s ease;
+      box-sizing: border-box;
+    }
+
+    .auth-form-group input:focus,
+    .auth-form-group select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .auth-alert {
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 1.1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      line-height: 1.4;
+    }
+
+    .auth-alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .auth-alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .auth-alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .auth-alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+    /* WIDGET DO USUÁRIO NO HEADER */
+    .header-user-widget {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-left: 0.5rem;
+      padding-left: 0.75rem;
+      border-left: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .user-profile-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 0.35rem 0.7rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      cursor: default;
+    }
+
+    .user-avatar-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .user-profile-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+
+    .user-profile-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .user-profile-role {
+      font-size: 0.68rem;
+      opacity: 0.85;
+    }
+
+    .btn-header-mod {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: #f59e0b;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-header-mod:hover {
+      background: #d97706;
+    }
+
+    .btn-header-logout {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(239, 68, 68, 0.2);
+      color: #fee2e2;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 6px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-header-logout:hover {
+      background: #dc2626;
+      color: white;
+    }
+
+    .badge-count {
+      background: #dc2626;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      margin-left: 0.2rem;
+    }
+
+    /* MODERAÇÃO DE USUÁRIOS */
+    .tabela-moderacao {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .tabela-moderacao th, .tabela-moderacao td {
+      padding: 0.7rem 0.8rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .tabela-moderacao th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .badge-pendente { background: #fef3c7; color: #92400e; }
+    .badge-aprovado { background: #dcfce7; color: #166534; }
+    .badge-rejeitado { background: #fee2e2; color: #991b1b; }
+
+    .btn-mod-action {
+      padding: 0.25rem 0.55rem;
+      border-radius: 4px;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 0.3rem;
+      transition: 0.15s;
+    }
+
+    .btn-mod-approve { background: #16a34a; color: white; }
+    .btn-mod-approve:hover { background: #15803d; }
+    .btn-mod-reject { background: #dc2626; color: white; }
+    .btn-mod-reject:hover { background: #b91c1c; }
+
+    /* STATUS DE DEMANDAS */
+    .status-badge-cadastrada { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .status-badge-analise { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .status-badge-aprovada { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .status-badge-encaminhada { background: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+    .status-badge-finalizada { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .status-badge-rejeitada { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+
+  <!-- Login / Cadastro Overlay (Estilo PIT-RIT / Secretaria Virtual) -->
+  <div id="login-overlay" class="auth-overlay active">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="header-logo-badge">UFJF</div>
+        <h2>Sistema de Demandas (DFD)</h2>
+        <p>Instituto de Artes e Design — UFJF</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="authService.alternarAuthTab('login')">
+          🔑 Entrar
+        </button>
+        <button type="button" class="auth-tab-btn" id="tabBtnCadastro" onclick="authService.alternarAuthTab('cadastro')">
+          📝 Solicitar Cadastro
+        </button>
+      </div>
+
+      <div class="auth-body">
+        <div id="authAlert" class="auth-alert" style="display: none;"></div>
+
+        <!-- Formulário de Login -->
+        <form id="formLogin" onsubmit="handleLoginSubmit(event)">
+          <div class="auth-form-group">
+            <label for="loginId">E-mail Institucional ou SIAPE</label>
+            <input type="text" id="loginId" placeholder="exemplo@ufjf.br ou 1234567" required autofocus autocomplete="username">
+          </div>
+
+          <div class="auth-form-group">
+            <label for="loginSenha">Senha</label>
+            <input type="password" id="loginSenha" placeholder="Digite sua senha" required autocomplete="current-password">
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; cursor: pointer; margin-bottom: 0;">
+              <input type="checkbox" id="loginLembrar" checked>
+              <span>Lembrar de mim</span>
+            </label>
+            <div style="display: flex; gap: 0.75rem;">
+              <a href="javascript:void(0)" onclick="authService.preencherLoginAdmin()" style="font-size: 0.8rem; color: #1e3a8a; text-decoration: none; font-weight: 600;">
+                Acesso Administrador
+              </a>
+            </div>
+          </div>
+
+          <button type="submit" id="btnLoginSubmit" class="btn btn-primary login-btn-submit" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem;">
+            Entrar no Sistema
+          </button>
+        </form>
+
+        <!-- Formulário de Solicitação de Cadastro -->
+        <form id="formCadastro" style="display: none;" onsubmit="handleCadastroSubmit(event)">
+          <div class="auth-form-group">
+            <label for="cadNome">Nome Completo *</label>
+            <input type="text" id="cadNome" placeholder="Ex: Prof(a). Maria Silva" required>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="cadEmail">E-mail Institucional (@ufjf.br) *</label>
+            <input type="email" id="cadEmail" placeholder="maria.silva@ufjf.br" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="auth-form-group">
+              <label for="cadSiape">Matrícula SIAPE *</label>
+              <input type="text" id="cadSiape" placeholder="Ex: 2393476" required>
+            </div>
+            <div class="auth-form-group">
+              <label for="cadCargo">Função / Cargo *</label>
+              <select id="cadCargo" required>
+                <option value="Docente">Docente</option>
+                <option value="Técnico Administrativo">Técnico Administrativo</option>
+                <option value="Secretaria">Secretaria</option>
+                <option value="Bolsista">Bolsista</option>
+                <option value="Estagiário">Estagiário</option>
+                <option value="Coordenação">Coordenação</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="cadSetor">Departamento / Setor *</label>
+            <select id="cadSetor" required>
+              <option value="Secretaria">Secretaria do IAD</option>
+              <option value="Direção">Direção do IAD</option>
+              <option value="Artes Visuais">Artes Visuais</option>
+              <option value="Bacharelado em Design">Bacharelado em Design</option>
+              <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
+              <option value="Moda">Moda</option>
+              <option value="Música">Música</option>
+              <option value="Laboratórios">Laboratórios</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <div class="auth-form-group">
+            <label for="cadSenha">Crie uma Senha *</label>
+            <input type="password" id="cadSenha" placeholder="Mínimo 6 caracteres" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <div class="auth-form-group">
+            <label for="cadSenhaConf">Confirme a Senha *</label>
+            <input type="password" id="cadSenhaConf" placeholder="Repita a senha criada" minlength="6" required autocomplete="new-password">
+          </div>
+
+          <div class="auth-alert auth-alert-warning" style="margin-bottom: 1rem; font-size: 0.8rem; display: flex; gap: 0.5rem; align-items: flex-start;">
+            <span style="font-size: 1.1rem;">⏳</span>
+            <div>
+              <strong>Moderação obrigatória:</strong> Para sua segurança, seu cadastro precisará ser <strong>aprovado pela Secretaria do IAD</strong> antes que o login seja liberado.
+            </div>
+          </div>
+
+          <button type="submit" id="btnCadSubmit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem;">
+            Solicitar Cadastro
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <i data-lucide="layers" style="width: 28px; height: 28px;"></i>
+      </div>
+      <div>
+        <h1>Solicitação de Compras de Materiais &mdash; IAD/UFJF</h1>
+        <p>Planejamento de Demandas para Licitações &bull; Catálogo com 9.600+ Itens Ativos Integrados</p>
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <div id="statusAutoSave" class="auto-save-status" title="Seus dados são salvos continuamente para prevenir perdas">
+        <span class="dot"></span>
+        <span id="textoAutoSave">Salvo automaticamente</span>
+      </div>
+
+      <div class="nav-tabs">
+        <button class="nav-tab-btn active" id="tabBtnNova" onclick="mostrarAba('nova')">
+          <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i> Nova Solicitação
+        </button>
+        <button class="nav-tab-btn" id="tabBtnHistorico" onclick="mostrarAba('historico')">
+          <i data-lucide="clipboard-list" style="width: 16px; height: 16px;"></i> Demandas Cadastradas
+        </button>
+      </div>
+
+      <!-- Widget do Usuário Logado -->
+      <div id="headerUserWidget" class="header-user-widget"></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ABA NOVA SOLICITAÇÃO -->
+    <section id="abaNovaSolicitacao">
+      <form id="formSolicitacao" onsubmit="salvarDemanda(event)">
+        <!-- 1. DADOS DO SOLICITANTE -->
+        <div class="card">
+          <div class="card-header">
+            <h2><i data-lucide="user-check" style="width: 20px; height: 20px;"></i> 1. Identificação do Solicitante e Setor (IAD/UFJF)</h2>
+            <div style="display: flex; gap: 0.5rem;">
+
+              <button type="button" class="btn btn-outline" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;" onclick="exportarBackupJSON()" title="Baixar cópia de segurança em arquivo JSON">
+                <i data-lucide="download" style="width: 14px; height: 14px;"></i> Exportar Backup
+              </button>
+              <label class="btn btn-outline" style="padding: 0.35rem 0.65rem; font-size: 0.75rem; cursor: pointer; margin: 0;" title="Restaurar de arquivo JSON">
+                <i data-lucide="upload" style="width: 14px; height: 14px;"></i> Importar Backup
+                <input type="file" accept=".json" style="display: none;" onchange="importarBackupJSON(event)">
+              </label>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid">
+              
+              <div class="form-group col-6">
+                <label for="nomeSolicitante">Nome Completo do Solicitante <span class="required">*</span></label>
+                <input type="text" id="nomeSolicitante" class="form-control" required placeholder="Ex.: Profa. Maria Silva" oninput="dispararAutoSave()">
+              </div>
+
+              <div class="form-group col-6">
+                <label for="setorSolicitante">Departamento ou Setor Solicitante <span class="required">*</span></label>
+                <select id="setorSolicitante" class="form-control" required onchange="dispararAutoSave()">
+                  <option value="">Selecione o setor...</option>
+                  <option value="DIREÇÃO DO INSTITUTO DE ARTES E DESIGN">DIREÇÃO DO INSTITUTO DE ARTES E DESIGN</option>
+                  <option value="SECRETARIA DO INSTITUTO DE ARTES E DESIGN">SECRETARIA DO INSTITUTO DE ARTES E DESIGN</option>
+                  <option value="DEPARTAMENTO DE ARTES E DESIGN">DEPARTAMENTO DE ARTES E DESIGN</option>
+                  <option value="DEPARTAMENTO DE MÚSICA">DEPARTAMENTO DE MÚSICA</option>
+                  <option value="COORDENAÇÃO DE MODA">COORDENAÇÃO DE MODA</option>
+                  <option value="COORDENAÇÃO BI">COORDENAÇÃO BI</option>
+                  <option value="COORDENAÇÃO DO DESIGN">COORDENAÇÃO DO DESIGN</option>
+                  <option value="COORDENAÇÃO DO CINEMA E AUDIOVISUAL">COORDENAÇÃO DO CINEMA E AUDIOVISUAL</option>
+                  <option value="COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS">COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS</option>
+                  <option value="COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS">COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS</option>
+                  <option value="COORDENAÇÃO DE INTEGRAÇÃO">COORDENAÇÃO DE INTEGRAÇÃO</option>
+                </select>
+              </div>
+
+              <div class="form-group col-4">
+                <label for="siape">Nº do SIAPE <span class="required">*</span></label>
+                <input type="text" id="siape" class="form-control" required placeholder="Ex.: 1234567" oninput="dispararAutoSave()">
+              </div>
+
+              <div class="form-group col-4">
+                <label for="email">E-mail Institucional (@ufjf.br) <span class="required">*</span></label>
+                <input type="email" id="email" class="form-control" required placeholder="usuario@ufjf.br" oninput="dispararAutoSave()">
+              </div>
+
+              <div class="form-group col-4">
+                <label for="categoria">Categoria do Material <span class="required">*</span></label>
+                <select id="categoria" class="form-control" required onchange="dispararAutoSave()">
+                  <option value="Consumo" selected>Consumo</option>
+                  <option value="Permanente">Permanente</option>
+                  <option value="Serviços">Serviços</option>
+                </select>
+              </div>
+
+              <div class="form-group col-12">
+                <label for="justificativaGeral">Justificativa Geral da Demanda <span class="required">*</span></label>
+                <textarea id="justificativaGeral" class="form-control" rows="3" required placeholder="Descreva a finalidade e justificativa da solicitação de compras para o setor / departamento (ex: para reposição de suprimentos dos ateliês, aulas práticas do semestre, rotina da secretaria, etc.)..." oninput="dispararAutoSave()"></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. SELEÇÃO DE ITENS COM AUTOCOMPLETE DINÂMICO E AUTO-PREENCHIMENTO -->
+        <div class="card">
+          <div class="card-header">
+            <h2><i data-lucide="search" style="width: 20px; height: 20px;"></i> 2. Adicionar Itens Demandados (Busca Inteligente no Catálogo Ativo)</h2>
+            <span class="badge badge-primary"><i data-lucide="check-circle-2" style="width: 12px; height: 12px;"></i> Somente Itens Ativos</span>
+          </div>
+          <div class="card-body">
+            
+            <div class="autocomplete-wrapper">
+              <label style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">
+                Pesquise o item digitando o nome, código ou subelemento (sugestões instantâneas com ordenação inteligente):
+              </label>
+              <div class="search-input-wrapper">
+                <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+                <input 
+                  type="text" 
+                  id="campoBuscaMaterial" 
+                  class="form-control" 
+                  placeholder="Comece a digitar para pesquisar... ex: papel a4, caneta, cafe, alcool, pasta..."
+                  autocomplete="off"
+                  oninput="aoDigitarBusca(this.value)"
+                  onkeydown="aoNavegarTeclado(event)"
+                >
+              </div>
+              <div id="listaSugestoes" class="suggestions-box"></div>
+            </div>
+
+            <!-- PAINEL DE DADOS PUXADOS AUTOMATICAMENTE DO ITEM SELECIONADO -->
+            <div id="painelItemPuxado" class="selected-preview">
+              <div class="preview-header">
+                <div>
+                  <h4 id="prevDescricao">Descrição do Material Selecionado</h4>
+                  <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+                    Dados oficiais recuperados da base de materiais de licitação:
+                  </p>
+                </div>
+                <span id="prevBadgeAtivo" class="badge badge-success">✓ Item Ativo</span>
+              </div>
+
+              <div class="preview-grid">
+                <div class="preview-field">
+                  <div class="label">Código do Material</div>
+                  <div class="value" id="prevCodigo">-</div>
+                </div>
+                <div class="preview-field">
+                  <div class="label">ID no Sistema</div>
+                  <div class="value" id="prevId">-</div>
+                </div>
+                <div class="preview-field">
+                  <div class="label">Unidade de Medida</div>
+                  <div class="value" id="prevUnidade">-</div>
+                </div>
+                <div class="preview-field">
+                  <div class="label">Elemento de Despesa</div>
+                  <div class="value" id="prevElemento">-</div>
+                </div>
+                <div class="preview-field">
+                  <div class="label">Subelemento</div>
+                  <div class="value" id="prevSubelemento">-</div>
+                </div>
+              </div>
+
+              <!-- CAMPOS ADICIONAIS DE QUANTIDADE, VALOR, PRIORIDADE E LINKS -->
+              <div class="form-grid" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border);">
+                
+                <div class="form-group col-2">
+                  <label for="itemQtd">Quantidade <span class="required">*</span></label>
+                  <input type="number" id="itemQtd" class="form-control" min="1" step="any" value="1" oninput="calcularTotalItem()">
+                </div>
+
+                <div class="form-group col-3">
+                  <label for="itemValorUnit">Preço Médio Estimado (R$)</label>
+                  <input type="number" id="itemValorUnit" class="form-control" min="0" step="0.01" placeholder="0,00" oninput="calcularTotalItem()">
+                </div>
+
+                <div class="form-group col-3">
+                  <label for="itemValorTotal">Subtotal Estimado (R$)</label>
+                  <input type="text" id="itemValorTotal" class="form-control" readonly value="R$ 0,00" style="background: #f1f5f9; font-weight: 600;">
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="itemPrioridade">Prioridade do Item <span class="required">*</span></label>
+                  <select id="itemPrioridade" class="form-control" required>
+                    <option value="Alta">Alta</option>
+                    <option value="Média-Alta">Média-Alta</option>
+                    <option value="Média" selected>Média</option>
+                    <option value="Média-Baixa">Média-Baixa</option>
+                    <option value="Baixa">Baixa</option>
+                  </select>
+                </div>
+
+                <div class="form-group col-6">
+                  <label for="itemLinks">Link(s) de Referência do Preço Médio / Cotação</label>
+                  <input type="text" id="itemLinks" class="form-control" placeholder="Cole link(s) de fornecedores, atas ou pesquisas de preço...">
+                </div>
+
+                <div class="form-group col-6">
+                  <label for="itemJustificativa">Especificações Complementares / Detalhes</label>
+                  <input type="text" id="itemJustificativa" class="form-control" placeholder="Marca de referência, requisitos técnicos, modelo, etc.">
+                </div>
+
+                <div class="form-group col-12" style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                  <button type="button" class="btn btn-success" style="min-width: 260px; height: 42px;" onclick="adicionarItemNaDemanda()">
+                    <i data-lucide="plus" style="width: 18px; height: 18px;"></i> Inserir Item na Demanda
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3. CESTA DE MATERIAIS DEMANDADOS -->
+        <div class="card">
+          <div class="card-header">
+            <h2><i data-lucide="shopping-cart" style="width: 20px; height: 20px;"></i> 3. Cesta de Materiais Demandados para o Setor de Licitação</h2>
+            <span id="contadorItensCesta" class="badge badge-secondary">0 itens na lista</span>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            
+            <div class="items-table-wrapper" style="border: none; border-radius: 0; margin-top: 0;">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;">Item</th>
+                    <th style="width: 105px;">Código</th>
+                    <th>Descrição Detalhada e Referências</th>
+                    <th style="width: 110px; text-align: center;">Prioridade</th>
+                    <th style="width: 70px;">Unid.</th>
+                    <th style="width: 80px; text-align: right;">Qtd.</th>
+                    <th style="width: 110px; text-align: right;">Preço Médio</th>
+                    <th style="width: 120px; text-align: right;">Total Estimado</th>
+                    <th style="width: 60px; text-align: center;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="corpoTabelaCesta">
+                  <tr id="linhaVaziaCesta">
+                    <td colspan="9" class="empty-state">
+                      <i data-lucide="package-open" style="width: 48px; height: 48px; display: inline-block;"></i>
+                      <p>Nenhum item adicionado ainda. Pesquise e selecione os materiais acima.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="total-banner">
+              <div>
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Previsão orçamentária da requisição:</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                <span style="font-size: 0.9rem; color: var(--text-muted);">Estimativa de Custo Total:</span>
+                <span id="valorTotalGeral" class="total-value">R$ 0,00</span>
+              </div>
+            </div>
+
+          </div>
+          <div class="card-body" style="display: flex; justify-content: flex-end; gap: 1rem; background: #fafafa; border-top: 1px solid var(--border); flex-wrap: wrap;">
+            <button type="button" class="btn btn-outline" onclick="limparFormularioComConfirmacao()">
+              <i data-lucide="rotate-ccw" style="width: 16px; height: 16px;"></i> Limpar Tudo
+            </button>
+            <button type="submit" class="btn btn-secondary btn-lg" style="background: #475569; color: white; border: none;">
+              <i data-lucide="save" style="width: 18px; height: 18px;"></i> Salvar Demanda no Sistema
+            </button>
+            <button type="button" class="btn btn-primary btn-lg" style="background: #059669; border-color: #059669;" onclick="enviarSolicitacaoAoSetorRequisitante()">
+              <i data-lucide="mail-check" style="width: 18px; height: 18px;"></i> Enviar Solicitação ao Setor Requisitante
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ABA HISTÓRICO DE DEMANDAS REGISTRADAS -->
+    <section id="abaHistorico" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <h2><i data-lucide="archive" style="width: 20px; height: 20px;"></i> Solicitações de Compras Registradas no Sistema</h2>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-outline" onclick="carregarHistoricoSolicitacoes()">
+              <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Atualizar
+            </button>
+          </div>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="items-table-wrapper" style="border: none;">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">Nº</th>
+                  <th style="width: 140px;">Data/Hora</th>
+                  <th>Solicitante</th>
+                  <th>Departamento / Setor</th>
+                  <th style="width: 90px; text-align: center;">Total Itens</th>
+                  <th style="width: 130px; text-align: right;">Estimativa Total</th>
+                  <th style="width: 110px; text-align: center;">Status</th>
+                  <th style="width: 240px; text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpoTabelaHistorico">
+                <tr>
+                  <td colspan="8" class="empty-state">
+                    <p>Carregando solicitações...</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DE DETALHES DA SOLICITAÇÃO -->
+  <div id="modalDetalhes" class="modal-overlay" onclick="fecharModalSeClicarFora(event)">
+    <div class="modal-card">
+      <div class="card-header" style="background: var(--primary); color: white;">
+        <h2 style="color: white;"><i data-lucide="file-text" style="width: 20px; height: 20px;"></i> Detalhamento da Solicitação</h2>
+        <button onclick="fecharModal()" style="background: transparent; border: none; color: white; cursor: pointer;">
+          <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+      </div>
+      <div class="card-body" id="conteudoModalDetalhes">
+        <!-- Injetado dinamicamente via JS -->
+      </div>
+      <div style="padding: 1rem 1.5rem; background: #fafafa; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline" id="btnModalEditar" onclick="editarSolicitacaoDoModal()" style="color: #1e3a8a;">
+            <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i> Editar Demanda
+          </button>
+          <button class="btn btn-success" id="btnModalEnviar" onclick="enviarSolicitacaoDoModal()" style="background: #059669; border-color: #059669;">
+            <i data-lucide="send" style="width: 16px; height: 16px;"></i> Enviar por E-mail
+          </button>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <button class="btn btn-outline" onclick="imprimirModal()">
+            <i data-lucide="printer" style="width: 16px; height: 16px;"></i> Imprimir
+          </button>
+          <button class="btn btn-primary" onclick="fecharModal()">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE MODERAÇÃO DE USUÁRIOS (ADMINISTRADOR) -->
+  <div id="modalModeracaoUsuarios" class="modal-overlay" onclick="if(event.target===this) authService.fecharModalModeracao()">
+    <div class="modal-card" style="max-width: 860px;">
+      <div class="card-header" style="background: #1e3a8a; color: white;">
+        <h2 style="color: white;"><i data-lucide="shield-check" style="width: 20px; height: 20px;"></i> Moderação de Cadastros e Acessos</h2>
+        <button onclick="authService.fecharModalModeracao()" style="background: transparent; border: none; color: white; cursor: pointer;">
+          <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+      </div>
+      <div class="card-body" id="conteudoModeracaoUsuarios" style="max-height: 65vh; overflow-y: auto;">
+        <!-- Injetado dinamicamente via JS -->
+      </div>
+      <div style="padding: 1rem 1.5rem; background: #fafafa; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+        <button class="btn btn-outline" onclick="authService.fecharModalModeracao()">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ALTERAÇÃO DE STATUS DA DEMANDA (ADMINISTRADOR / SECRETARIA) -->
+  <div id="modalStatusDemanda" class="modal-overlay" onclick="if(event.target===this) fecharModalStatusDemanda()">
+    <div class="modal-card" style="max-width: 520px;">
+      <div class="card-header" style="background: #1e3a8a; color: white;">
+        <h2 style="color: white;"><i data-lucide="tag" style="width: 20px; height: 20px;"></i> Atualizar Status da Demanda</h2>
+        <button onclick="fecharModalStatusDemanda()" style="background: transparent; border: none; color: white; cursor: pointer;">
+          <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <input type="hidden" id="statusDemandaId">
+        <div style="margin-bottom: 1.25rem;">
+          <h4 id="statusDemandaTitulo" style="color: #1e3a8a; margin-bottom: 0.25rem;">Demanda #</h4>
+          <p id="statusDemandaInfo" style="font-size: 0.85rem; color: var(--text-muted);"></p>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: #334155;">Status da Solicitação *</label>
+          <select id="novoStatusDemandaSelect" class="form-control" style="width: 100%; padding: 0.65rem;">
+            <option value="Cadastrada">Cadastrada</option>
+            <option value="Em Análise">Em Análise (Secretaria)</option>
+            <option value="Aprovada">Aprovada pela Direção</option>
+            <option value="Encaminhada para Licitação">Encaminhada para Licitação</option>
+            <option value="Finalizada">Finalizada / Atendida</option>
+            <option value="Rejeitada">Rejeitada / Devolvida</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: #334155;">Observação / Despacho Administrativo (Opcional)</label>
+          <textarea id="obsStatusDemanda" class="form-control" rows="3" placeholder="Ex.: Número do processo SEI, dotação orçamentária ou orientação ao setor solicitante..." style="width: 100%;"></textarea>
+        </div>
+      </div>
+      <div style="padding: 1rem 1.5rem; background: #fafafa; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn btn-outline" onclick="fecharModalStatusDemanda()">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="confirmarAtualizacaoStatus()">Salvar Alteração</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastAlert" class="toast">
+    <i data-lucide="check-circle" id="toastIcon" style="width: 20px; height: 20px;"></i>
+    <span id="toastMsg">Mensagem</span>
+  </div>
+
+  <footer>
+    <p>Instituto de Artes e Design (IAD) &bull; Universidade Federal de Juiz de Fora (UFJF)</p>
+    <p style="margin-top: 4px; font-size: 0.75rem;">Sistema de Cadastramento e Levantamento de Demandas para Licitação &bull; Compatível com GitHub Pages</p>
+  </footer>
+
+  <script>
+    // ESTADO DA APLICAÇÃO
+    let itensDaDemanda = [];
+    let itemSelecionadoAtual = null;
+    let timerBusca = null;
+    let sugestoesAtuais = [];
+    let indiceSugestaoFocada = -1;
+    let timerAutoSave = null;
+    let demandaEmEdicaoId = null; // ID da demanda que está sendo editada (se houver)
+    let solicitacaoVisualizadaAtual = null; // Guarda o objeto aberto no modal
+
+    // CATÁLOGO LOCAL (100% Client-side para GitHub Pages)
+    let catalogoEstatico = null;
+    let carregandoCatalogo = false;
+    let modoEstatico = true; // Por padrão, opera direto no cliente sem depender de Python
+
+    // CHAVES DO LOCALSTORAGE
+    const KEY_RASCUNHO = "rascunho_demanda_iad";
+    const KEY_SOLICITACOES = "solicitacoes_iad";
+
+    // INICIALIZAÇÃO
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".autocomplete-wrapper")) {
+          fecharSugestoes();
+        }
+      });
+
+      // Inicializar sistema de login e widget do usuário
+      if (typeof authService !== "undefined") {
+        authService.atualizarInterfaceUsuario();
+      }
+
+      // Carregar catálogo de itens ativos
+      await carregarCatalogoEstatico();
+
+      // Restaurar rascunho anterior se existir
+      restaurarRascunhoAutomatico();
+    });
+
+    async function carregarCatalogoEstatico() {
+      if (catalogoEstatico || carregandoCatalogo) return;
+      carregandoCatalogo = true;
+      try {
+        let raw = null;
+        // Prioridade 1: window.CATALOGO_ITENS (carregado via script tag, livre de bloqueio CORS no protocolo file:// e rapido no GitHub Pages)
+        if (window.CATALOGO_ITENS && Array.isArray(window.CATALOGO_ITENS)) {
+          raw = window.CATALOGO_ITENS;
+        } else {
+          // Prioridade 2: fetch assincrono (quando servido via HTTP/HTTPS)
+          const resp = await fetch("itens_catalogo.json");
+          raw = await resp.json();
+        }
+
+        if (raw) {
+          catalogoEstatico = raw.map(r => {
+            const descNorm = normalizarTexto(r[6]);
+            const codNorm = normalizarTexto(r[5]);
+            const subNorm = normalizarTexto(r[4]);
+            return {
+              id_item: r[0],
+              elemento: r[1],
+              desc_elemento: r[2],
+              subelemento: r[3],
+              desc_subelemento: r[4],
+              codigo: r[5],
+              descricao: r[6],
+              unidade: r[7],
+              ativo: r[8],
+              _desc_norm: descNorm,
+              _full_norm: `${codNorm} ${descNorm} ${subNorm}`
+            };
+          });
+          console.log(`Catálogo indexado com sucesso: ${catalogoEstatico.length} itens ativos.`);
+        }
+      } catch (err) {
+        console.warn("Aviso ao carregar catálogo de itens:", err);
+      } finally {
+        carregandoCatalogo = false;
+      }
+    }
+
+    function normalizarTexto(txt) {
+      if (!txt) return "";
+      return txt.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    // AUTOCOMPLETE INTELIGENTE COM RANKING POR SEQUÊNCIA DE PALAVRAS
+    function aoDigitarBusca(termo) {
+      clearTimeout(timerBusca);
+      const lista = document.getElementById("listaSugestoes");
+      
+      if (!termo || termo.trim().length < 2) {
+        lista.innerHTML = "";
+        lista.style.display = "none";
+        return;
+      }
+
+      timerBusca = setTimeout(async () => {
+        if (!catalogoEstatico) {
+          await carregarCatalogoEstatico();
+        }
+
+        if (catalogoEstatico) {
+          const termos = normalizarTexto(termo).split(/\s+/).filter(Boolean);
+          const termoStr = termos.join(" ");
+          const resultadosPontuados = [];
+
+          for (let i = 0; i < catalogoEstatico.length; i++) {
+            const item = catalogoEstatico[i];
+            const desc = item._desc_norm;
+            const full = item._full_norm;
+
+            // Filtra: todos os termos digitados devem existir no item
+            const contemTodos = termos.every(t => full.includes(t));
+            if (!contemTodos) continue;
+
+            let score = 0;
+
+            // 1. Descrição começa exatamente com o termo da busca (ex: "papel a4...")
+            if (desc.startsWith(termoStr)) {
+              score += 2500;
+            } 
+            // 2. Termo exato aparece junto em qualquer parte da descrição
+            else if (desc.includes(termoStr)) {
+              const pos = desc.indexOf(termoStr);
+              score += 1200 - Math.min(pos, 600);
+            } 
+            // 3. Ordem sequencial das palavras na descrição
+            else {
+              let lastPos = 0;
+              let naOrdem = true;
+              for (const t of termos) {
+                const p = desc.indexOf(t, lastPos);
+                if (p === -1) {
+                  naOrdem = false;
+                  break;
+                }
+                lastPos = p + t.length;
+              }
+
+              if (naOrdem) {
+                score += 600;
+              } else {
+                score += 150;
+              }
+            }
+
+            // 4. Bônus para material comum de expediente (subelemento 16)
+            if (String(item.subelemento) === "16") {
+              score += 100;
+            }
+
+            resultadosPontuados.push({ item, score });
+          }
+
+          // Ordena pela pontuação decrescente
+          resultadosPontuados.sort((a, b) => b.score - a.score);
+          const melhoresResultados = resultadosPontuados.slice(0, 15).map(r => r.item);
+
+          sugestoesAtuais = melhoresResultados;
+          renderizarSugestoes(melhoresResultados);
+        }
+      }, 140);
+    }
+
+    function renderizarSugestoes(itens) {
+      const lista = document.getElementById("listaSugestoes");
+      indiceSugestaoFocada = -1;
+
+      if (!itens || itens.length === 0) {
+        lista.innerHTML = `
+          <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+            Nenhum material ativo encontrado com o termo digitado.
+          </div>
+        `;
+        lista.style.display = "block";
+        return;
+      }
+
+      lista.innerHTML = itens.map((it, idx) => `
+        <div class="suggestion-item" data-idx="${idx}" onclick="selecionarItemDoCatalogo(${idx})">
+          <div class="suggestion-main">${escapeHtml(it.descricao)}</div>
+          <div class="suggestion-badges">
+            <span class="badge badge-primary">Código: ${escapeHtml(it.codigo)}</span>
+            <span class="badge badge-subelem">${escapeHtml(it.desc_subelemento || 'Geral')}</span>
+            <span class="badge badge-secondary">Unid: ${escapeHtml(it.unidade)}</span>
+            <span class="badge badge-success">✓ Ativo</span>
+          </div>
+        </div>
+      `).join("");
+
+      lista.style.display = "block";
+    }
+
+    function fecharSugestoes() {
+      const lista = document.getElementById("listaSugestoes");
+      lista.style.display = "none";
+      indiceSugestaoFocada = -1;
+    }
+
+    function aoNavegarTeclado(e) {
+      const lista = document.getElementById("listaSugestoes");
+      if (lista.style.display !== "block" || sugestoesAtuais.length === 0) return;
+
+      const items = lista.querySelectorAll(".suggestion-item");
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        indiceSugestaoFocada = (indiceSugestaoFocada + 1) % items.length;
+        atualizarFocoSugestao(items);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        indiceSugestaoFocada = (indiceSugestaoFocada - 1 + items.length) % items.length;
+        atualizarFocoSugestao(items);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (indiceSugestaoFocada >= 0 && indiceSugestaoFocada < sugestoesAtuais.length) {
+          selecionarItemDoCatalogo(indiceSugestaoFocada);
+        }
+      } else if (e.key === "Escape") {
+        fecharSugestoes();
+      }
+    }
+
+    function atualizarFocoSugestao(items) {
+      items.forEach((it, idx) => {
+        if (idx === indiceSugestaoFocada) {
+          it.classList.add("highlighted");
+          it.scrollIntoView({ block: "nearest" });
+        } else {
+          it.classList.remove("highlighted");
+        }
+      });
+    }
+
+    // AO SELECIONAR UM ITEM: PUXAR DADOS AUTOMATICAMENTE
+    function selecionarItemDoCatalogo(idx) {
+      const item = sugestoesAtuais[idx];
+      if (!item) return;
+
+      itemSelecionadoAtual = item;
+      fecharSugestoes();
+
+      document.getElementById("prevDescricao").innerText = item.descricao;
+      document.getElementById("prevCodigo").innerText = item.codigo;
+      document.getElementById("prevId").innerText = item.id_item || "-";
+      document.getElementById("prevUnidade").innerText = item.unidade || "UN";
+      document.getElementById("prevElemento").innerText = `${item.elemento} - ${item.desc_elemento}`;
+      document.getElementById("prevSubelemento").innerText = `${item.subelemento} - ${item.desc_subelemento}`;
+
+      // Reset dos campos do item
+      document.getElementById("itemQtd").value = "1";
+      document.getElementById("itemValorUnit").value = "";
+      document.getElementById("itemPrioridade").value = "Média";
+      document.getElementById("itemLinks").value = "";
+      document.getElementById("itemJustificativa").value = "";
+            document.getElementById("itemValorTotal").value = "R$ 0,00";
+
+      document.getElementById("painelItemPuxado").classList.add("show");
+      document.getElementById("itemQtd").focus();
+    }
+
+    function calcularTotalItem() {
+      const qtd = parseFloat(document.getElementById("itemQtd").value) || 0;
+      const vUnit = parseFloat(document.getElementById("itemValorUnit").value) || 0;
+      const tot = qtd * vUnit;
+      document.getElementById("itemValorTotal").value = formatarMoeda(tot);
+    }
+
+    function adicionarItemNaDemanda() {
+      if (!itemSelecionadoAtual) {
+        mostrarToast("Selecione um item do catálogo primeiro!", "error");
+        return;
+      }
+
+      const qtd = parseFloat(document.getElementById("itemQtd").value);
+      if (!qtd || qtd <= 0) {
+        mostrarToast("Informe uma quantidade válida!", "error");
+        document.getElementById("itemQtd").focus();
+        return;
+      }
+
+      const vUnit = parseFloat(document.getElementById("itemValorUnit").value) || 0;
+      const prioridade = document.getElementById("itemPrioridade").value || "Média";
+      const links = document.getElementById("itemLinks").value.trim();
+      const specs = document.getElementById("itemJustificativa").value.trim();
+
+      const novoItem = {
+        ...itemSelecionadoAtual,
+        quantidade: qtd,
+        valor_unitario: vUnit,
+        valor_total: qtd * vUnit,
+        prioridade: prioridade,
+        links: links,
+        especificacoes: specs
+      };
+
+      itensDaDemanda.push(novoItem);
+      renderizarTabelaCesta();
+      dispararAutoSave();
+
+      // Limpar seleção
+      itemSelecionadoAtual = null;
+      document.getElementById("painelItemPuxado").classList.remove("show");
+      document.getElementById("campoBuscaMaterial").value = "";
+      document.getElementById("campoBuscaMaterial").focus();
+
+      mostrarToast("Item adicionado à demanda com sucesso!", "success");
+    }
+
+    function removerItemCesta(idx) {
+      itensDaDemanda.splice(idx, 1);
+      renderizarTabelaCesta();
+      dispararAutoSave();
+      mostrarToast("Item removido da cesta.", "success");
+    }
+
+    function getBadgeClassPrioridade(prio) {
+      switch(prio) {
+        case "Alta": return "badge-prio-alta";
+        case "Média-Alta": return "badge-prio-media-alta";
+        case "Média": return "badge-prio-media";
+        case "Média-Baixa": return "badge-prio-media-baixa";
+        case "Baixa": return "badge-prio-baixa";
+        default: return "badge-secondary";
+      }
+    }
+
+    function renderizarTabelaCesta() {
+      const tbody = document.getElementById("corpoTabelaCesta");
+      const contador = document.getElementById("contadorItensCesta");
+      const totalGeralEl = document.getElementById("valorTotalGeral");
+
+      contador.innerText = `${itensDaDemanda.length} ${itensDaDemanda.length === 1 ? 'item' : 'itens'} na lista`;
+
+      if (itensDaDemanda.length === 0) {
+        tbody.innerHTML = `
+          <tr id="linhaVaziaCesta">
+            <td colspan="9" class="empty-state">
+              <i data-lucide="package-open" style="width: 48px; height: 48px; display: inline-block;"></i>
+              <p>Nenhum item adicionado ainda. Pesquise e selecione os materiais acima.</p>
+            </td>
+          </tr>
+        `;
+        totalGeralEl.innerText = "R$ 0,00";
+        lucide.createIcons();
+        return;
+      }
+
+      let somaGeral = 0;
+      tbody.innerHTML = itensDaDemanda.map((it, idx) => {
+        somaGeral += it.valor_total;
+        const prioBadge = `<span class="badge ${getBadgeClassPrioridade(it.prioridade)}">${escapeHtml(it.prioridade || 'Média')}</span>`;
+        
+        let linksHtml = '';
+        if (it.links) {
+          linksHtml = `
+            <div style="font-size: 0.75rem; color: #2563eb; margin-top: 3px; word-break: break-all;">
+              <strong>Link(s):</strong> <a href="${it.links.startsWith('http') ? escapeHtml(it.links) : 'https://' + escapeHtml(it.links)}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline;">${escapeHtml(it.links)}</a>
+            </div>
+          `;
+        }
+
+        return `
+          <tr>
+            <td style="font-weight: 600; color: var(--text-muted); text-align: center;">${idx + 1}</td>
+            <td>
+              <span class="badge badge-primary" style="font-family: monospace;">${escapeHtml(it.codigo)}</span>
+              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">ID: ${escapeHtml(it.id_item || '-')}</div>
+            </td>
+            <td>
+              <strong style="color: #1e3a8a;">${escapeHtml(it.descricao)}</strong>
+              ${it.especificacoes ? `<div style="font-size: 0.78rem; color: #475569; margin-top: 3px;"><strong>Espec.:</strong> ${escapeHtml(it.especificacoes)}</div>` : ''}
+              ${linksHtml}
+            </td>
+            <td style="text-align: center;">${prioBadge}</td>
+            <td><strong>${escapeHtml(it.unidade)}</strong></td>
+            <td style="text-align: right; font-weight: 600;">${it.quantidade}</td>
+            <td style="text-align: right;">${it.valor_unitario > 0 ? formatarMoeda(it.valor_unitario) : '<span style="color: var(--text-muted);">-</span>'}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--primary);">${it.valor_total > 0 ? formatarMoeda(it.valor_total) : '<span style="color: var(--text-muted);">-</span>'}</td>
+            <td style="text-align: center;">
+              <button type="button" class="btn btn-danger-sm" onclick="removerItemCesta(${idx})" title="Remover item">
+                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      totalGeralEl.innerText = formatarMoeda(somaGeral);
+      lucide.createIcons();
+    }
+
+    // AUTO-SAVE E PERSISTÊNCIA ROBUSTA (Prevenção de perdas / Queda de energia)
+    function dispararAutoSave() {
+      clearTimeout(timerAutoSave);
+      const statusEl = document.getElementById("textoAutoSave");
+      if (statusEl) statusEl.innerText = "Salvando...";
+
+      timerAutoSave = setTimeout(() => {
+        salvarRascunhoLocal();
+      }, 500);
+    }
+
+    function salvarRascunhoLocal() {
+      try {
+        const rascunho = {
+          nome: (document.getElementById("nomeSolicitante").value || "").trim(),
+          setor: (document.getElementById("setorSolicitante").value || "").trim(),
+          siape: (document.getElementById("siape").value || "").trim(),
+          email: (document.getElementById("email").value || "").trim(),
+          categoria: document.getElementById("categoria").value,
+          justificativaGeral: (document.getElementById("justificativaGeral").value || "").trim(),
+          itens: itensDaDemanda,
+          atualizadoEm: new Date().toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit', second: '2-digit'})
+        };
+
+        localStorage.setItem(KEY_RASCUNHO, JSON.stringify(rascunho));
+        
+        const statusEl = document.getElementById("textoAutoSave");
+        if (statusEl) statusEl.innerText = `Salvo às ${rascunho.atualizadoEm}`;
+      } catch (err) {
+        console.warn("Erro ao salvar rascunho local:", err);
+      }
+    }
+
+    function restaurarRascunhoAutomatico() {
+      try {
+        const raw = localStorage.getItem(KEY_RASCUNHO);
+        if (!raw) return;
+
+        const rascunho = JSON.parse(raw);
+        if (!rascunho) return;
+
+        let restaurouAlgo = false;
+        if (rascunho.nome) { document.getElementById("nomeSolicitante").value = rascunho.nome; restaurouAlgo = true; }
+        if (rascunho.setor) { document.getElementById("setorSolicitante").value = rascunho.setor; restaurouAlgo = true; }
+        if (rascunho.siape) { document.getElementById("siape").value = rascunho.siape; restaurouAlgo = true; }
+        if (rascunho.email) { document.getElementById("email").value = rascunho.email; restaurouAlgo = true; }
+        if (rascunho.categoria) { document.getElementById("categoria").value = rascunho.categoria; }
+        if (rascunho.justificativaGeral) { document.getElementById("justificativaGeral").value = rascunho.justificativaGeral; restaurouAlgo = true; }
+
+        if (Array.isArray(rascunho.itens) && rascunho.itens.length > 0) {
+          itensDaDemanda = rascunho.itens;
+          renderizarTabelaCesta();
+          restaurouAlgo = true;
+        }
+
+        if (restaurouAlgo) {
+          mostrarToast("Rascunho em andamento restaurado automaticamente!", "info");
+          const statusEl = document.getElementById("textoAutoSave");
+          if (statusEl && rascunho.atualizadoEm) {
+            statusEl.innerText = `Rascunho de ${rascunho.atualizadoEm}`;
+          }
+        }
+      } catch (err) {
+        console.warn("Erro ao restaurar rascunho:", err);
+      }
+    }
+
+    // EXPORTAR E IMPORTAR BACKUP EM JSON
+    function exportarBackupJSON() {
+      const dados = {
+        solicitante: {
+          nome: document.getElementById("nomeSolicitante").value.trim(),
+          setor: document.getElementById("setorSolicitante").value.trim(),
+          siape: document.getElementById("siape").value.trim(),
+          email: document.getElementById("email").value.trim(),
+          categoria: document.getElementById("categoria").value,
+          justificativaGeral: document.getElementById("justificativaGeral").value.trim()
+        },
+        itens: itensDaDemanda,
+        exportadoEm: new Date().toISOString()
+      };
+
+      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `demanda_iad_${dados.solicitante.siape || 'backup'}_${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      mostrarToast("Cópia de segurança JSON baixada!", "success");
+    }
+
+    function importarBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const dados = JSON.parse(e.target.result);
+          if (dados.solicitante) {
+            document.getElementById("nomeSolicitante").value = dados.solicitante.nome || "";
+            document.getElementById("setorSolicitante").value = dados.solicitante.setor || "";
+            document.getElementById("siape").value = dados.solicitante.siape || "";
+            document.getElementById("email").value = dados.solicitante.email || "";
+            if (dados.solicitante.categoria) document.getElementById("categoria").value = dados.solicitante.categoria;
+            if (dados.solicitante.justificativaGeral) document.getElementById("justificativaGeral").value = dados.solicitante.justificativaGeral;
+          }
+          if (Array.isArray(dados.itens)) {
+            itensDaDemanda = dados.itens;
+            renderizarTabelaCesta();
+          }
+          dispararAutoSave();
+          mostrarToast("Backup restaurado com sucesso!", "success");
+        } catch (err) {
+          mostrarToast("Arquivo JSON inválido ou corrompido.", "error");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // SALVAR DEMANDA (Persistência no navegador e API se disponível)
+    async function salvarDemanda(e) {
+      if (e) e.preventDefault();
+
+      const nome = (document.getElementById("nomeSolicitante").value || "").trim();
+      const setor = (document.getElementById("setorSolicitante").value || "").trim();
+      const siape = (document.getElementById("siape").value || "").trim();
+      const email = (document.getElementById("email").value || "").trim();
+      const categoria = document.getElementById("categoria").value;
+      const justificativaGeral = (document.getElementById("justificativaGeral").value || "").trim();
+
+      if (!nome || !setor || !siape || !email || !justificativaGeral) {
+        mostrarToast("Preencha todos os campos obrigatórios, incluindo a Justificativa Geral!", "error");
+        if (!justificativaGeral) document.getElementById("justificativaGeral").focus();
+        return;
+      }
+
+      if (itensDaDemanda.length === 0) {
+        mostrarToast("Adicione pelo menos 1 material à cesta antes de salvar!", "error");
+        document.getElementById("campoBuscaMaterial").focus();
+        return;
+      }
+
+      const totalDemanda = itensDaDemanda.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
+
+      const dados = {
+        solicitante: {
+          nome: nome,
+          setor: setor,
+          siape: siape,
+          email: email,
+          categoria: categoria,
+          justificativa: justificativaGeral,
+          estimativa_total: totalDemanda
+        },
+        itens: itensDaDemanda.map(it => ({
+          id_item: it.id_item,
+          codigo: it.codigo,
+          descricao: it.descricao,
+          elemento: it.elemento,
+          desc_elemento: it.desc_elemento,
+          subelemento: it.subelemento,
+          desc_subelemento: it.desc_subelemento,
+          unidade: it.unidade,
+          quantidade: it.quantidade,
+          valor_unitario: it.valor_unitario,
+          prioridade: it.prioridade || 'Média',
+          links: it.links || '',
+          justificativa: it.justificativa,
+          observacoes: it.especificacoes
+        }))
+      };
+
+      // 1. Tentar salvar no Supabase (em nuvem com persistência real)
+      let salvouSupabase = false;
+      let idGerado = null;
+      if (window.demandasSupabase) {
+        try {
+          const resSup = await demandasSupabase.salvarDemanda(dados, demandaEmEdicaoId);
+          if (resSup && resSup.sucesso) {
+            salvouSupabase = true;
+            idGerado = resSup.id;
+          }
+        } catch (errSup) {
+          console.warn("Aviso ao salvar no Supabase:", errSup);
+        }
+      }
+
+      // 2. Tenta enviar para backend local se ativo
+      if (!modoEstatico && !salvouSupabase) {
+        try {
+          const resp = await fetch("/api/solicitacoes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dados)
+          });
+
+          if (resp.ok) {
+            const res = await resp.json();
+            if (res.sucesso) {
+              idGerado = res.id;
+            }
+          }
+        } catch (err) {
+          modoEstatico = true;
+        }
+      }
+
+      // 3. Persistência Fallback e Cache no LocalStorage
+      try {
+        const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+        const novoId = idGerado || (historicoLocal.length > 0 ? Math.max(...historicoLocal.map(s => Number(s.id) || 0)) + 1 : 1);
+        
+        let registroId = novoId;
+        const itensFormatados = dados.itens.map(it => ({
+          ...it,
+          valor_unitario_estimado: it.valor_unitario,
+          valor_total_estimado: it.quantidade * it.valor_unitario
+        }));
+
+        if (demandaEmEdicaoId) {
+          // Atualiza a demanda existente
+          const idx = historicoLocal.findIndex(s => String(s.id) === String(demandaEmEdicaoId));
+          if (idx !== -1) {
+            registroId = demandaEmEdicaoId;
+            historicoLocal[idx] = {
+              ...historicoLocal[idx],
+              nome_solicitante: dados.solicitante.nome,
+              setor_solicitante: dados.solicitante.setor,
+              siape: dados.solicitante.siape,
+              email: dados.solicitante.email,
+              categoria: dados.solicitante.categoria,
+              justificativa: dados.solicitante.justificativa,
+              total_itens: dados.itens.length,
+              estimativa_total: totalDemanda,
+              itens: itensFormatados,
+              data_atualizacao: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'})
+            };
+          }
+        } else {
+          // Nova demanda
+          const registro = {
+            id: novoId,
+            data_solicitacao: new Date().toLocaleDateString("pt-BR") + " " + new Date().toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'}),
+            nome_solicitante: dados.solicitante.nome,
+            setor_solicitante: dados.solicitante.setor,
+            siape: dados.solicitante.siape,
+            email: dados.solicitante.email,
+            categoria: dados.solicitante.categoria,
+            justificativa: dados.solicitante.justificativa,
+            status: "Cadastrada",
+            total_itens: dados.itens.length,
+            estimativa_total: totalDemanda,
+            itens: itensFormatados
+          };
+          historicoLocal.unshift(registro);
+        }
+        localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
+        
+        // Limpar rascunho após salvar com sucesso
+        localStorage.removeItem(KEY_RASCUNHO);
+
+        const msgSucesso = salvouSupabase 
+          ? `Demanda nº ${registroId} ${demandaEmEdicaoId ? "atualizada" : "cadastrada"} na nuvem (Supabase) com sucesso!`
+          : `Demanda nº ${registroId} ${demandaEmEdicaoId ? "atualizada" : "salva"} com sucesso!`;
+        mostrarToast(msgSucesso, "success");
+        demandaEmEdicaoId = null;
+        limparFormulario();
+        mostrarAba("historico");
+      } catch (err) {
+        console.error(err);
+        mostrarToast("Erro ao salvar solicitação: " + err.message, "error");
+      }
+    }
+
+    // BOTÃO: ENVIAR SOLICITAÇÃO AO SETOR REQUISITANTE POR E-MAIL
+    const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzSh0_Am_mrEzRPoJhPzZN20R2n_4QBGpZTkJOxrtvLkUUI-7LpJkSbN8vN93uwkFn/exec";
+
+    async function enviarSolicitacaoAoSetorRequisitante() {
+      const nome = (document.getElementById("nomeSolicitante").value || "").trim();
+      const setor = (document.getElementById("setorSolicitante").value || "").trim();
+      const siape = (document.getElementById("siape").value || "").trim();
+      const email = (document.getElementById("email").value || "").trim();
+      const categoria = document.getElementById("categoria").value;
+      const justificativaGeral = (document.getElementById("justificativaGeral").value || "").trim();
+
+      if (!nome || !setor || !siape || !email || !justificativaGeral) {
+        mostrarToast("Preencha todos os campos obrigatórios, incluindo a Justificativa Geral, antes de enviar.", "error");
+        if (!justificativaGeral) document.getElementById("justificativaGeral").focus();
+        return;
+      }
+
+      if (itensDaDemanda.length === 0) {
+        mostrarToast("Adicione pelo menos um item à cesta para enviar a solicitação.", "error");
+        return;
+      }
+
+      const totalGeral = itensDaDemanda.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
+      const destinatario = "secretaria.iad@ufjf.br";
+      const cc = "josue.ferreira@ufjf.br,andre.xando@ufjf.br";
+      const assunto = `Solicitação de Demanda de Materiais - ${setor} (${nome})`;
+
+      // Montagem do corpo texto puro
+      let corpo = `SOLICITAÇÃO DE DEMANDA DE MATERIAIS — IAD/UFJF\n`;
+      corpo += `========================================================================\n\n`;
+      corpo += `DADOS DO SOLICITANTE / SETOR REQUISITANTE:\n`;
+      corpo += `------------------------------------------------------------------------\n`;
+      corpo += `Solicitante:     ${nome}\n`;
+      corpo += `Setor / Depto:   ${setor}\n`;
+      corpo += `SIAPE:           ${siape}\n`;
+      corpo += `E-mail:          ${email}\n`;
+      corpo += `Categoria:       ${categoria}\n`;
+      corpo += `Justificativa:   ${justificativaGeral}\n\n`;
+      corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
+      corpo += `------------------------------------------------------------------------\n`;
+
+      itensDaDemanda.forEach((it, idx) => {
+        const subtotal = it.quantidade * it.valor_unitario;
+        corpo += `Item ${idx + 1}:\n`;
+        corpo += `  • ID IAD:          ${it.id_item || "-"}\n`;
+        corpo += `  • Código:          ${it.codigo}\n`;
+        corpo += `  • Descrição:       ${it.descricao}\n`;
+        corpo += `  • Subelemento:     ${it.subelemento} - ${it.desc_subelemento || 'Geral'}\n`;
+        corpo += `  • Prioridade:      ${it.prioridade || 'Média'}\n`;
+        corpo += `  • Quantidade:      ${it.quantidade} ${it.unidade}\n`;
+        corpo += `  • Preço Médio:     ${formatarMoeda(it.valor_unitario)}
+`;
+        corpo += `  • Subtotal Estim.: ${formatarMoeda(subtotal)}\n`;
+        if (it.links) {
+          corpo += `  • Link(s) Ref.:    ${it.links}\n`;
+        }
+        if (it.especificacoes) {
+          corpo += `  • Especificações:  ${it.especificacoes}\n`;
+        }
+        corpo += `\n`;
+      });
+
+      corpo += `------------------------------------------------------------------------\n`;
+      corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
+      corpo += `========================================================================\n\n`;
+      corpo += `Enviado automaticamente pelo Sistema de Demandas do IAD/UFJF.\n`;
+
+      // Payload estruturado para o Google Apps Script
+      const payload = {
+        nome: nome,
+        setor: setor,
+        siape: siape,
+        email: email,
+        categoria: categoria,
+        justificativa: justificativaGeral,
+        totalGeral: formatarMoeda(totalGeral),
+        corpoTexto: corpo,
+        itens: itensDaDemanda
+      };
+
+      const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
+
+      // 1. Se houver Webhook do Google Apps Script configurado, envia 100% automático em segundo plano
+      if (webhookUrl) {
+        mostrarToast("Enviando e-mail automaticamente em segundo plano...", "info");
+        try {
+          await fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+          });
+
+          // Também salva a demanda no histórico
+          await salvarDemanda();
+
+          mostrarToast("✓ Solicitação enviada por e-mail com sucesso para secretaria.iad@ufjf.br!", "success");
+          return;
+        } catch (err) {
+          console.warn("Falha no Google Apps Script, recorrendo ao mailto:", err);
+        }
+      }
+
+      // 2. Se não houver webhook configurado, pergunta ou abre mailto transparente
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      
+      let iframe = document.getElementById("hiddenMailFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "hiddenMailFrame";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+      iframe.src = mailtoUrl;
+
+      navigator.clipboard?.writeText(corpo).catch(() => {});
+      mostrarToast("Solicitação gerada! Abrindo cliente de e-mail...", "success");
+    }
+
+    function configurarWebhookAppsScript() {
+      const atual = localStorage.getItem("gas_webhook_url") || "";
+      const url = prompt("Cole a URL do seu Google Apps Script (Web App) para envio 100% automático em segundo plano:", atual);
+      if (url !== null) {
+        localStorage.setItem("gas_webhook_url", url.trim());
+        if (url.trim()) {
+          mostrarToast("URL do Google Apps Script salva com sucesso!", "success");
+        } else {
+          mostrarToast("Envio automático desativado (usando padrão).", "info");
+        }
+      }
+    }
+
+    function limparFormularioComConfirmacao() {
+      if (confirm("Deseja realmente limpar todos os campos e a cesta desta demanda?")) {
+        limparFormulario();
+        localStorage.removeItem(KEY_RASCUNHO);
+        mostrarToast("Formulário limpo.", "info");
+      }
+    }
+
+    function limparFormulario() {
+      demandaEmEdicaoId = null;
+      solicitacaoVisualizadaAtual = null;
+      document.getElementById("formSolicitacao").reset();
+      itensDaDemanda = [];
+      itemSelecionadoAtual = null;
+      document.getElementById("painelItemPuxado").classList.remove("show");
+      renderizarTabelaCesta();
+      const statusEl = document.getElementById("textoAutoSave");
+      if (statusEl) statusEl.innerText = "Salvo automaticamente";
+    }
+
+    // STATUS BADGE HELPER
+    function getStatusBadgeClass(status) {
+      const st = (status || "").toLowerCase();
+      if (st.includes("analise") || st.includes("análise")) return "status-badge-analise";
+      if (st.includes("aprovad")) return "status-badge-aprovada";
+      if (st.includes("encaminhad") || st.includes("licitacao") || st.includes("licitação")) return "status-badge-encaminhada";
+      if (st.includes("finalizad") || st.includes("atendid")) return "status-badge-finalizada";
+      if (st.includes("rejeitad")) return "status-badge-rejeitada";
+      return "status-badge-cadastrada";
+    }
+
+    // CARREGAR HISTÓRICO (Supabase em tempo real + Fallbacks)
+    async function carregarHistoricoSolicitacoes() {
+      const tbody = document.getElementById("corpoTabelaHistorico");
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state"><p>Carregando solicitações...</p></td></tr>`;
+
+      const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
+      const isAdminOuSec = usuarioLogado && (usuarioLogado.is_admin || usuarioLogado.cargo === 'Secretaria' || usuarioLogado.setor === 'Secretaria' || usuarioLogado.email === 'admin@iad.ufjf.br');
+
+      let sols = [];
+
+      // 1. Tentar buscar em tempo real do Supabase
+      if (window.demandasSupabase) {
+        try {
+          const dadosSupabase = await demandasSupabase.listarDemandas();
+          if (dadosSupabase && Array.isArray(dadosSupabase)) {
+            sols = dadosSupabase.map(d => ({
+              id: d.id,
+              data_solicitacao: d.created_at ? (new Date(d.created_at).toLocaleDateString("pt-BR") + " " + new Date(d.created_at).toLocaleTimeString("pt-BR", {hour: '2-digit', minute: '2-digit'})) : "-",
+              nome_solicitante: d.nome_solicitante,
+              setor_solicitante: d.setor_solicitante,
+              siape: d.siape,
+              email: d.email,
+              categoria: d.categoria,
+              justificativa: d.justificativa,
+              status: d.status || "Cadastrada",
+              total_itens: d.total_itens || (d.itens ? d.itens.length : 0),
+              estimativa_total: Number(d.estimativa_total || 0),
+              itens: d.itens || [],
+              observacoes_admin: d.observacoes_admin || ""
+            }));
+
+            // Atualiza cache local
+            localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(sols));
+          }
+        } catch (e) {
+          console.warn("Falha ao carregar do Supabase:", e);
+        }
+      }
+
+      // 2. Se Supabase não retornou ou falhou, tenta backend local
+      if (sols.length === 0 && !modoEstatico) {
+        try {
+          const resp = await fetch("/api/solicitacoes");
+          if (resp.ok) {
+            sols = await resp.json();
+          }
+        } catch (err) {
+          modoEstatico = true;
+        }
+      }
+
+      // 3. Fallback no LocalStorage
+      if (sols.length === 0) {
+        try {
+          sols = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+        } catch (e) {
+          sols = [];
+        }
+      }
+
+      if (!sols || sols.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="empty-state">
+              <i data-lucide="clipboard-x" style="width: 48px; height: 48px; display: inline-block;"></i>
+              <p>Nenhuma solicitação cadastrada ainda.</p>
+            </td>
+          </tr>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      tbody.innerHTML = sols.map(s => {
+        const badgeClass = getStatusBadgeClass(s.status);
+        return `
+        <tr>
+          <td style="font-weight: 700; color: var(--primary);">#${s.id}</td>
+          <td style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(s.data_solicitacao || "")}</td>
+          <td>
+            <strong>${escapeHtml(s.nome_solicitante)}</strong>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(s.email)} &bull; SIAPE: ${escapeHtml(s.siape)}</div>
+          </td>
+          <td><span class="badge badge-subelem">${escapeHtml(s.setor_solicitante)}</span></td>
+          <td style="text-align: center; font-weight: 600;">${s.total_itens}</td>
+          <td style="text-align: right; font-weight: 700; color: var(--primary);">${formatarMoeda(s.estimativa_total || 0)}</td>
+          <td style="text-align: center;">
+            <span class="badge ${badgeClass}">${escapeHtml(s.status)}</span>
+          </td>
+          <td style="text-align: center; white-space: nowrap;">
+            <button class="btn btn-outline" style="padding: 0.35rem 0.55rem; font-size: 0.75rem;" onclick="abrirDetalhesSolicitacao(${s.id})" title="Visualizar materiais da demanda">
+              <i data-lucide="eye" style="width: 13px; height: 13px;"></i> Ver
+            </button>
+            <button class="btn btn-outline" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; color: #1e3a8a; border-color: #cbd5e1;" onclick="editarSolicitacao(${s.id})" title="Carregar no formulário para editar">
+              <i data-lucide="edit-3" style="width: 13px; height: 13px;"></i> Editar
+            </button>
+            ${isAdminOuSec ? `
+              <button class="btn btn-outline" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; color: #d97706; border-color: #fde68a;" onclick="abrirModalStatusDemanda(${s.id}, '${escapeHtml(s.status)}', '${escapeHtml(s.observacoes_admin || '')}')" title="Alterar status administrativo">
+                <i data-lucide="tag" style="width: 13px; height: 13px;"></i> Status
+              </button>
+            ` : ''}
+            <button class="btn btn-success" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; background: #059669; border-color: #059669;" onclick="enviarSolicitacaoSalvaPorEmail(${s.id})" title="Enviar esta demanda ao setor por e-mail">
+              <i data-lucide="send" style="width: 13px; height: 13px;"></i> Enviar
+            </button>
+          </td>
+        </tr>
+      `}).join("");
+      lucide.createIcons();
+    }
+
+    // FUNÇÕES DE STATUS DA DEMANDA (ADMINISTRADOR / SECRETARIA)
+    function abrirModalStatusDemanda(id, statusAtual, observacoes) {
+      const modal = document.getElementById("modalStatusDemanda");
+      if (!modal) return;
+      document.getElementById("statusDemandaId").value = id;
+      document.getElementById("statusDemandaTitulo").textContent = `Demanda nº #${id}`;
+      document.getElementById("statusDemandaInfo").textContent = `Defina o andamento oficial do processo de compras para os materiais requisitados.`;
+      const sel = document.getElementById("novoStatusDemandaSelect");
+      if (sel) sel.value = statusAtual || "Cadastrada";
+      const obs = document.getElementById("obsStatusDemanda");
+      if (obs) obs.value = observacoes || "";
+      modal.classList.add("show");
+    }
+
+    function fecharModalStatusDemanda() {
+      const modal = document.getElementById("modalStatusDemanda");
+      if (modal) modal.classList.remove("show");
+    }
+
+    async function confirmarAtualizacaoStatus() {
+      const id = document.getElementById("statusDemandaId").value;
+      const novoStatus = document.getElementById("novoStatusDemandaSelect").value;
+      const obs = (document.getElementById("obsStatusDemanda").value || "").trim();
+
+      if (!id) return;
+
+      mostrarToast("Atualizando status da demanda...", "info");
+
+      // Atualizar no Supabase
+      if (window.demandasSupabase) {
+        await demandasSupabase.atualizarStatus(id, novoStatus, obs);
+      }
+
+      // Atualizar no LocalStorage
+      const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+      const idx = historicoLocal.findIndex(s => String(s.id) === String(id));
+      if (idx !== -1) {
+        historicoLocal[idx].status = novoStatus;
+        historicoLocal[idx].observacoes_admin = obs;
+        localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
+      }
+
+      fecharModalStatusDemanda();
+      mostrarToast(`✓ Status da demanda #${id} alterado para "${novoStatus}"!`, "success");
+      carregarHistoricoSolicitacoes();
+    }
+
+    // DETALHES NO MODAL
+    async function abrirDetalhesSolicitacao(id) {
+      try {
+        let sol = null;
+        if (!modoEstatico) {
+          try {
+            const resp = await fetch(`/api/solicitacoes/${id}`);
+            if (resp.ok) {
+              sol = await resp.json();
+            }
+          } catch (err) {
+            modoEstatico = true;
+          }
+        }
+
+        if (!sol) {
+          const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+          sol = historicoLocal.find(s => s.id === id);
+        solicitacaoVisualizadaAtual = sol;
+        }
+
+        if (!sol) {
+          mostrarToast("Solicitação não encontrada.", "error");
+          return;
+        }
+
+        const container = document.getElementById("conteudoModalDetalhes");
+        container.innerHTML = `
+          <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <div>
+              <h3 style="color: var(--primary);">Demanda nº ${sol.id} &mdash; ${escapeHtml(sol.categoria)}</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Data de Cadastro: ${escapeHtml(sol.data_solicitacao)}</p>
+            </div>
+            <span class="badge ${getStatusBadgeClass(sol.status)}" style="font-size: 0.85rem;">${escapeHtml(sol.status)}</span>
+          </div>
+
+          <div class="preview-grid" style="margin-bottom: 1.25rem;">
+            <div class="preview-field">
+              <div class="label">Solicitante</div>
+              <div class="value">${escapeHtml(sol.nome_solicitante)}</div>
+            </div>
+            <div class="preview-field">
+              <div class="label">Departamento / Setor</div>
+              <div class="value">${escapeHtml(sol.setor_solicitante)}</div>
+            </div>
+            <div class="preview-field">
+              <div class="label">SIAPE / E-mail</div>
+              <div class="value">${escapeHtml(sol.siape)} &bull; ${escapeHtml(sol.email)}</div>
+            </div>
+            <div class="preview-field">
+              <div class="label">Categoria</div>
+              <div class="value">${escapeHtml(sol.categoria)}</div>
+            </div>
+            ${sol.justificativa ? `
+            <div class="preview-field" style="grid-column: 1 / -1;">
+              <div class="label">Justificativa Geral da Demanda</div>
+              <div class="value" style="font-weight: 500; color: #334155;">${escapeHtml(sol.justificativa)}</div>
+            </div>` : ''}
+            ${sol.observacoes_admin ? `
+            <div class="preview-field" style="grid-column: 1 / -1; background: #eff6ff; border-left: 3px solid #2563eb; padding: 0.6rem 0.8rem; border-radius: 4px;">
+              <div class="label" style="color: #1e40af; font-weight: 700;">Despacho / Observações Administrativas</div>
+              <div class="value" style="font-weight: 500; color: #1e293b;">${escapeHtml(sol.observacoes_admin)}</div>
+            </div>` : ''}
+          </div>
+
+          <h4 style="font-size: 0.95rem; margin-bottom: 0.6rem; color: #334155;">Itens Integrados Demandados ao Setor de Licitação:</h4>
+          <div class="items-table-wrapper">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Código</th>
+                  <th>Material e Detalhes</th>
+                  <th style="text-align: center;">Prioridade</th>
+                  <th>Unid.</th>
+                  <th style="text-align: right;">Qtd.</th>
+                  <th style="text-align: right;">Preço Médio</th>
+                  <th style="text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sol.itens.map((it, i) => `
+                  <tr>
+                    <td>${i + 1}</td>
+                    <td><span class="badge badge-primary">${escapeHtml(it.codigo)}</span></td>
+                    <td>
+                      <strong>${escapeHtml(it.descricao)}</strong>
+                      ${it.observacoes ? `<div style="font-size: 0.75rem; color: #475569;">Espec: ${escapeHtml(it.observacoes)}</div>` : ''}
+                      ${it.links ? `<div style="font-size: 0.75rem; color: #2563eb; word-break: break-all;">Link: <a href="${it.links.startsWith('http') ? escapeHtml(it.links) : 'https://' + escapeHtml(it.links)}" target="_blank" style="color: #2563eb; text-decoration: underline;">${escapeHtml(it.links)}</a></div>` : ''}
+                    </td>
+                    <td style="text-align: center;"><span class="badge ${getBadgeClassPrioridade(it.prioridade)}">${escapeHtml(it.prioridade || 'Média')}</span></td>
+                    <td>${escapeHtml(it.unidade)}</td>
+                    <td style="text-align: right; font-weight: 600;">${it.quantidade}</td>
+                    <td style="text-align: right;">${formatarMoeda(it.valor_unitario_estimado || it.valor_unitario)}</td>
+                    <td style="text-align: right; font-weight: 700; color: var(--primary);">${formatarMoeda(it.valor_total_estimado || it.valor_total)}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top: 1rem; text-align: right; font-size: 1.1rem; font-weight: 700; color: var(--primary);">
+            Estimativa de Custo Total: ${formatarMoeda(sol.estimativa_total || 0)}
+          </div>
+        `;
+
+        document.getElementById("modalDetalhes").classList.add("open");
+        lucide.createIcons();
+      } catch (err) {
+        mostrarToast("Erro ao carregar detalhes da solicitação.", "error");
+      }
+    }
+
+    function fecharModal() {
+      document.getElementById("modalDetalhes").classList.remove("open");
+    }
+
+    function fecharModalSeClicarFora(e) {
+      if (e.target.id === "modalDetalhes") {
+        fecharModal();
+      }
+    }
+
+    function imprimirModal() {
+      window.print();
+    }
+
+    // ABAS
+    function mostrarAba(aba) {
+      const abaNova = document.getElementById("abaNovaSolicitacao");
+      const abaHist = document.getElementById("abaHistorico");
+      const btnNova = document.getElementById("tabBtnNova");
+      const btnHist = document.getElementById("tabBtnHistorico");
+
+      if (aba === "nova") {
+        abaNova.style.display = "block";
+        abaHist.style.display = "none";
+        btnNova.classList.add("active");
+        btnHist.classList.remove("active");
+      } else {
+        abaNova.style.display = "none";
+        abaHist.style.display = "block";
+        btnNova.classList.remove("active");
+        btnHist.classList.add("active");
+        carregarHistoricoSolicitacoes();
+      }
+      lucide.createIcons();
+    }
+
+    // UTILITÁRIOS
+    function formatarMoeda(v) {
+      return (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function mostrarToast(msg, tipo = "info") {
+      const toast = document.getElementById("toastAlert");
+      const text = document.getElementById("toastMsg");
+      const icon = document.getElementById("toastIcon");
+
+      text.innerText = msg;
+      toast.className = `toast show ${tipo}`;
+      icon.setAttribute("data-lucide", tipo === "success" ? "check-circle" : "alert-circle");
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 4000);
+    }
+  
+    // EDITAR UMA DEMANDA JÁ CADASTRADA
+    function editarSolicitacao(id) {
+      const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+      const sol = historicoLocal.find(s => s.id === id);
+      if (!sol) {
+        mostrarToast("Solicitação não encontrada para edição.", "error");
+        return;
+      }
+
+      demandaEmEdicaoId = sol.id;
+
+      // Preenche os campos do cabeçalho
+      document.getElementById("nomeSolicitante").value = sol.nome_solicitante || "";
+      document.getElementById("setorSolicitante").value = sol.setor_solicitante || "";
+      document.getElementById("siape").value = sol.siape || "";
+      document.getElementById("email").value = sol.email || "";
+      if (sol.categoria) document.getElementById("categoria").value = sol.categoria;
+      document.getElementById("justificativaGeral").value = sol.justificativa || "";
+
+      // Carrega os itens na cesta
+      itensDaDemanda = (sol.itens || []).map(it => ({
+        ...it,
+        valor_unitario: it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0),
+        valor_total: (it.quantidade || 1) * (it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0))
+      }));
+
+      renderizarTabelaCesta();
+      dispararAutoSave();
+
+      // Muda para a aba de edição
+      mostrarAba("nova");
+      mostrarToast(`Editando Demanda nº ${sol.id}. Faça as alterações e clique em 'Salvar' ou 'Enviar'.`, "info");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // DISPARO DE E-MAIL A PARTIR DE UMA DEMANDA JÁ SALVA NO HISTÓRICO
+    async function enviarSolicitacaoSalvaPorEmail(id) {
+      const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+      const sol = historicoLocal.find(s => s.id === id);
+      if (!sol) {
+        mostrarToast("Solicitação não encontrada.", "error");
+        return;
+      }
+
+      const itens = sol.itens || [];
+      if (itens.length === 0) {
+        mostrarToast("A demanda selecionada não possui itens cadastrados.", "error");
+        return;
+      }
+
+      const totalGeral = sol.estimativa_total || itens.reduce((acc, it) => acc + (it.quantidade * (it.valor_unitario_estimado || it.valor_unitario || 0)), 0);
+      const destinatario = "secretaria.iad@ufjf.br";
+      const cc = "josue.ferreira@ufjf.br,andre.xando@ufjf.br";
+      const assunto = `Solicitação de Demanda de Materiais - ${sol.setor_solicitante} (${sol.nome_solicitante})`;
+
+      // Corpo texto puro
+      let corpo = `SOLICITAÇÃO DE DEMANDA DE MATERIAIS — IAD/UFJF\n`;
+      corpo += `========================================================================\n\n`;
+      corpo += `DADOS DO SOLICITANTE / SETOR REQUISITANTE:\n`;
+      corpo += `------------------------------------------------------------------------\n`;
+      corpo += `Demanda Nº:      #${sol.id}\n`;
+      corpo += `Solicitante:     ${sol.nome_solicitante}\n`;
+      corpo += `Setor / Depto:   ${sol.setor_solicitante}\n`;
+      corpo += `SIAPE:           ${sol.siape}\n`;
+      corpo += `E-mail:          ${sol.email}\n`;
+      corpo += `Categoria:       ${sol.categoria}\n`;
+      corpo += `Justificativa:   ${sol.justificativa || 'Não informada'}\n\n`;
+      corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
+      corpo += `------------------------------------------------------------------------\n`;
+
+      itens.forEach((it, idx) => {
+        const vUnit = it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0);
+        const subtotal = it.quantidade * vUnit;
+        corpo += `Item ${idx + 1}:\n`;
+        corpo += `  • ID IAD:          ${it.id_item || '-'}\n`;
+        corpo += `  • Código:          ${it.codigo}\n`;
+        corpo += `  • Descrição:       ${it.descricao}\n`;
+        corpo += `  • Subelemento:     ${it.subelemento || ''} - ${it.desc_subelemento || 'Geral'}\n`;
+        corpo += `  • Prioridade:      ${it.prioridade || 'Média'}\n`;
+        corpo += `  • Quantidade:      ${it.quantidade} ${it.unidade}\n`;
+        corpo += `  • Preço Médio:     ${formatarMoeda(vUnit)}\n`;
+        corpo += `  • Subtotal Estim.: ${formatarMoeda(subtotal)}\n`;
+        if (it.links) corpo += `  • Link(s) Ref.:    ${it.links}\n`;
+        if (it.especificacoes || it.observacoes) corpo += `  • Especificações:  ${it.especificacoes || it.observacoes}\n`;
+        corpo += `\n`;
+      });
+
+      corpo += `------------------------------------------------------------------------\n`;
+      corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
+      corpo += `========================================================================\n\n`;
+      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF.\n`;
+
+      // Payload para o Google Apps Script
+      const payload = {
+        nome: sol.nome_solicitante,
+        setor: sol.setor_solicitante,
+        siape: sol.siape,
+        email: sol.email,
+        categoria: sol.categoria,
+        justificativa: sol.justificativa || "",
+        totalGeral: formatarMoeda(totalGeral),
+        corpoTexto: corpo,
+        itens: itens.map(it => ({
+          ...it,
+          valor_unitario: it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0)
+        }))
+      };
+
+      const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
+
+      if (webhookUrl) {
+        mostrarToast(`Enviando Demanda #${sol.id} por e-mail em segundo plano...`, "info");
+        try {
+          await fetch(webhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(payload)
+          });
+
+          // Atualiza status para 'Enviada'
+          const idx = historicoLocal.findIndex(s => s.id === id);
+          if (idx !== -1) {
+            historicoLocal[idx].status = "Enviada por E-mail";
+            localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
+            carregarHistoricoSolicitacoes();
+          }
+
+          mostrarToast(`✓ Demanda #${sol.id} enviada com sucesso para secretaria.iad@ufjf.br!`, "success");
+          return;
+        } catch (err) {
+          console.warn("Falha no envio via webhook:", err);
+        }
+      }
+
+      // Fallback mailto
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      let iframe = document.getElementById("hiddenMailFrame");
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "hiddenMailFrame";
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+      }
+      iframe.src = mailtoUrl;
+      navigator.clipboard?.writeText(corpo).catch(() => {});
+      mostrarToast(`Demanda #${sol.id} preparada! Abrindo cliente de e-mail...`, "success");
+    }
+
+    function editarSolicitacaoDoModal() {
+      if (solicitacaoVisualizadaAtual) {
+        const id = solicitacaoVisualizadaAtual.id;
+        fecharModal();
+        editarSolicitacao(id);
+      }
+    }
+
+    function enviarSolicitacaoDoModal() {
+      if (solicitacaoVisualizadaAtual) {
+        const id = solicitacaoVisualizadaAtual.id;
+        enviarSolicitacaoSalvaPorEmail(id);
+      }
+    }
+
+  </script>
+</body>
+</html>

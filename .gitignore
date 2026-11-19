@@ -1,0 +1,21 @@
+# Bancos de dados locais SQLite (não usados pelo GitHub Pages)
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos brutos pesados de catálogo (o catálogo ativo já está em itens_catalogo.js)
+dados.csv
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Arquivos de sistema operacional
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Configurações de IDE
+.vscode/
+.idea/
