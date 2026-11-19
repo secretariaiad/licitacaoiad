@@ -244,23 +244,49 @@ const demandasSupabase = {
   },
 
   /**
-   * Exclui uma demanda no Supabase
+   * Exclui uma demanda no Supabase (Permitido para Administradores)
    */
   async excluirDemanda(id) {
-    if (!window.supabaseClient) return false;
+    if (!id) return false;
 
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    // 1. Tenta exclusão direta via REST nativo
     try {
-      const { error } = await window.supabaseClient
-        .from(this.TABELA)
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      return true;
-    } catch (err) {
-      console.error("Erro ao excluir demanda do Supabase:", err);
-      return false;
+      const resp = await fetch(`${supUrl}/rest/v1/${this.TABELA}?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`
+        }
+      });
+      if (resp.ok) {
+        console.log(`✓ Demanda #${id} excluída com sucesso do Supabase via REST.`);
+        return true;
+      }
+    } catch (e) {
+      console.warn("Falha no DELETE direto REST:", e);
     }
+
+    // 2. Fallback via cliente SDK
+    if (window.supabaseClient) {
+      try {
+        const { error } = await window.supabaseClient
+          .from(this.TABELA)
+          .delete()
+          .eq("id", id);
+
+        if (!error) {
+          console.log(`✓ Demanda #${id} excluída com sucesso do Supabase via SDK.`);
+          return true;
+        }
+      } catch (err) {
+        console.error("Erro ao excluir demanda do Supabase via SDK:", err);
+      }
+    }
+
+    return false;
   },
 
   /**

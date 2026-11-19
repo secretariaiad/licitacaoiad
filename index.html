@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_6"></script>
-  <script src="auth.js?v=20261119_6"></script>
-  <script src="demandas-supabase.js?v=20261119_6"></script>
+  <script src="supabase-config.js?v=20261119_7"></script>
+  <script src="auth.js?v=20261119_7"></script>
+  <script src="demandas-supabase.js?v=20261119_7"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -1388,12 +1388,15 @@
         <!-- Injetado dinamicamente via JS -->
       </div>
       <div style="padding: 1rem 1.5rem; background: #fafafa; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
           <button class="btn btn-outline" id="btnModalEditar" onclick="editarSolicitacaoDoModal()" style="color: #1e3a8a;">
             <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i> Editar Demanda
           </button>
           <button class="btn btn-success" id="btnModalEnviar" onclick="enviarSolicitacaoDoModal()" style="background: #059669; border-color: #059669;">
             <i data-lucide="send" style="width: 16px; height: 16px;"></i> Enviar por E-mail
+          </button>
+          <button class="btn btn-outline" id="btnModalExcluir" onclick="excluirSolicitacaoDoModal()" style="color: #dc2626; border-color: #fecaca; display: none;" title="Excluir Demanda (Administrador)">
+            <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Excluir Demanda
           </button>
         </div>
         <div style="display: flex; gap: 0.5rem;">
@@ -2441,6 +2444,9 @@
               <button class="btn btn-outline" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; color: #d97706; border-color: #fde68a;" onclick="abrirModalStatusDemanda(${s.id}, '${escapeHtml(s.status)}', '${escapeHtml(s.observacoes_admin || '')}')" title="Alterar status administrativo">
                 <i data-lucide="tag" style="width: 13px; height: 13px;"></i> Status
               </button>
+              <button class="btn btn-outline" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; color: #dc2626; border-color: #fecaca;" onclick="excluirSolicitacaoDemanda(${s.id})" title="Excluir demanda permanentemente (Administrador)">
+                <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i> Excluir
+              </button>
             ` : ''}
             <button class="btn btn-success" style="padding: 0.35rem 0.55rem; font-size: 0.75rem; background: #059669; border-color: #059669;" onclick="enviarSolicitacaoSalvaPorEmail(${s.id})" title="Enviar esta demanda ao setor por e-mail">
               <i data-lucide="send" style="width: 13px; height: 13px;"></i> Enviar
@@ -2610,6 +2616,15 @@
             Estimativa de Custo Total: ${formatarMoeda(sol.estimativa_total || 0)}
           </div>
         `;
+
+        const btnExcluirModal = document.getElementById("btnModalExcluir");
+        if (btnExcluirModal) {
+          const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
+          const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
+          const ADMINS_LIST = ["felipe.braga@ufjf.br", "josue.ferreira@ufjf.br", "andre.xando@ufjf.br", "felipe.braga", "josue.ferreira", "andre.xando"];
+          const isAdmin = (usuarioLogado && usuarioLogado.is_admin === true) || ADMINS_LIST.includes(emailLogado) || (typeof authService !== "undefined" && authService.isUsuarioAdmin(usuarioLogado));
+          btnExcluirModal.style.display = isAdmin ? "inline-flex" : "none";
+        }
 
         document.getElementById("modalDetalhes").classList.add("open");
         lucide.createIcons();
@@ -2845,6 +2860,57 @@
       if (solicitacaoVisualizadaAtual) {
         const id = solicitacaoVisualizadaAtual.id;
         enviarSolicitacaoSalvaPorEmail(id);
+      }
+    }
+
+    async function excluirSolicitacaoDemanda(id) {
+      if (!id) return;
+
+      const usuarioLogado = typeof authService !== "undefined" ? authService.obterSessao() : null;
+      const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
+      const ADMINS_LIST = ["felipe.braga@ufjf.br", "josue.ferreira@ufjf.br", "andre.xando@ufjf.br", "felipe.braga", "josue.ferreira", "andre.xando"];
+      const isAdmin = (usuarioLogado && usuarioLogado.is_admin === true) || ADMINS_LIST.includes(emailLogado) || (typeof authService !== "undefined" && authService.isUsuarioAdmin(usuarioLogado));
+
+      if (!isAdmin) {
+        mostrarToast("Apenas administradores podem excluir demandas do sistema.", "error");
+        return;
+      }
+
+      const confirmou = confirm(`Atenção, Administrador!\n\nTem certeza de que deseja EXCLUIR DEFINITIVAMENTE a Demanda nº #${id}?\n\nEsta ação apagará a demanda do banco de dados na nuvem (Supabase) e não poderá ser desfeita.`);
+      if (!confirmou) return;
+
+      mostrarToast(`Excluindo Demanda nº #${id}...`, "info");
+
+      // 1. Excluir do Supabase
+      const svcDemandas = window.demandasSupabase || (typeof demandasSupabase !== "undefined" ? demandasSupabase : null);
+      if (svcDemandas) {
+        try {
+          await svcDemandas.excluirDemanda(id);
+        } catch (e) {
+          console.warn("Aviso ao excluir do Supabase:", e);
+        }
+      }
+
+      // 2. Excluir do cache local
+      try {
+        const historicoLocal = JSON.parse(localStorage.getItem(KEY_SOLICITACOES) || "[]");
+        const novoHistorico = historicoLocal.filter(s => String(s.id) !== String(id));
+        localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(novoHistorico));
+      } catch (e) {}
+
+      // Se o modal de visualização estiver aberto para esta demanda, fechar
+      if (solicitacaoVisualizadaAtual && String(solicitacaoVisualizadaAtual.id) === String(id)) {
+        fecharModal();
+      }
+
+      mostrarToast(`✓ Demanda nº #${id} excluída com sucesso!`, "success");
+      carregarHistoricoSolicitacoes();
+    }
+
+    function excluirSolicitacaoDoModal() {
+      if (solicitacaoVisualizadaAtual) {
+        const id = solicitacaoVisualizadaAtual.id;
+        excluirSolicitacaoDemanda(id);
       }
     }
 
