@@ -12,11 +12,12 @@
  * 5. Clique no ícone de lápis (Editar) na versão ativa:
  *    - Versão: "Nova versão"
  *    - Executar como: "Eu (felipe.braga@ufjf.br)"
- *    - Quem pode acessar: "Qualquer pessoa" (permite que a página GitHub Pages envie requisições)
+ *    - Quem pode acessar: "Qualquer pessoa" (permite que a página envie requisições)
  * 6. Clique em "Implantar" e confirme as permissões do Google Workspace se solicitado.
  * 
  * VANTAGENS:
  * - Quem recebe o e-mail: Exclusivamente suprimentos.iad@ufjf.br
+ * - E-mail com Layout HTML Formal: Tabela estilizada, cabeçalho institucional e cartões.
  * - Reply-To (Responder para): Configurado automaticamente para o e-mail cadastrado
  *   do demandante (ex: jacqueline.roque@ufjf.br). Ao clicar em "Responder" no Gmail,
  *   a mensagem vai diretamente para quem fez a solicitação!
@@ -40,19 +41,24 @@ function doPost(e) {
     var emailDemandante = (dados.email || dados.remetente || "").trim();
     var nomeDemandante = (dados.nome || "Solicitante IAD").trim();
     var setorDemandante = (dados.setor || "Setor IAD").trim();
-    var siape = (dados.siape || "-").trim();
-    var totalGeral = (dados.totalGeral || "R$ 0,00").trim();
     var demandaId = dados.id ? (" #" + dados.id) : "";
 
     var assunto = "Solicitação de Demanda de Materiais" + demandaId + " - " + setorDemandante + " (" + nomeDemandante + ")";
-    var corpo = dados.corpoTexto || "Demanda cadastrada no Sistema DFD do IAD.";
+    var corpoTexto = dados.corpoTexto || "Demanda cadastrada no Sistema DFD do IAD.";
+    var corpoHtml = dados.corpoHtml || null;
+
+    var options = {
+      name: nomeDemandante + " via Sistema DFD",
+      replyTo: emailDemandante || destinatario
+    };
+
+    // Se o HTML formatado estiver presente, anexa como corpo HTML para exibição profissional no Gmail
+    if (corpoHtml) {
+      options.htmlBody = corpoHtml;
+    }
 
     // Disparo oficial para suprimentos.iad@ufjf.br
-    // Com replyTo configurado para o demandante
-    GmailApp.sendEmail(destinatario, assunto, corpo, {
-      name: nomeDemandante + " (Demandante IAD)",
-      replyTo: emailDemandante || destinatario
-    });
+    GmailApp.sendEmail(destinatario, assunto, corpoTexto, options);
 
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",

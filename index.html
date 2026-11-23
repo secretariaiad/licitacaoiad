@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261123_01"></script>
-  <script src="auth.js?v=20261123_01"></script>
-  <script src="demandas-supabase.js?v=20261123_01"></script>
+  <script src="supabase-config.js?v=20261123_02"></script>
+  <script src="auth.js?v=20261123_02"></script>
+  <script src="demandas-supabase.js?v=20261123_02"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -2564,6 +2564,178 @@
     // BOTÃO: ENVIAR SOLICITAÇÃO AO SETOR REQUISITANTE POR E-MAIL
     const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzzSh0_Am_mrEzRPoJhPzZN20R2n_4QBGpZTkJOxrtvLkUUI-7LpJkSbN8vN93uwkFn/exec";
 
+    // GERADOR DE E-MAIL EM FORMATO HTML FORMAL E ELEGANTE (GMAIL / OUTLOOK)
+    function construirCorpoEmailHtml(dados) {
+      const itens = Array.isArray(dados.itens) ? dados.itens : [];
+      const idStr = dados.id ? ` #${dados.id}` : '';
+      const totalFormatado = formatarMoeda(dados.totalGeral || 0);
+
+      return `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 16px; color: #1e293b; }
+  .email-wrapper { max-width: 660px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06); }
+  .email-header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 22px 26px; color: #ffffff; }
+  .header-tag { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #93c5fd; margin-bottom: 4px; }
+  .header-title { font-size: 20px; font-weight: 700; margin: 0; color: #ffffff; }
+  .header-sub { font-size: 13px; color: #bfdbfe; margin-top: 4px; }
+  .email-content { padding: 24px 26px; }
+  .block-title { font-size: 13px; font-weight: 700; color: #1e3a8a; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 0; margin-bottom: 14px; }
+  .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+  .meta-table td { padding: 5px 8px; font-size: 13px; vertical-align: top; }
+  .meta-label { font-weight: 600; color: #64748b; width: 115px; }
+  .meta-val { font-weight: 600; color: #0f172a; }
+  .justificativa-card { background: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 12px 14px; margin-bottom: 22px; font-size: 13px; color: #334155; line-height: 1.5; }
+  .items-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12px; }
+  .items-table th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 11px; padding: 9px 8px; border-bottom: 2px solid #cbd5e1; text-align: left; }
+  .items-table td { padding: 9px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  .items-table tr:nth-child(even) { background: #f8fafc; }
+  .badge-prio { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+  .prio-alta { background: #fee2e2; color: #b91c1c; }
+  .prio-media { background: #fef3c7; color: #92400e; }
+  .prio-baixa { background: #e0f2fe; color: #0369a1; }
+  .total-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px 16px; text-align: right; margin-bottom: 20px; }
+  .total-box .lbl { font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; }
+  .total-box .val { font-size: 19px; font-weight: 800; color: #1e3a8a; margin-top: 2px; }
+  .email-footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 26px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <div class="header-tag">Instituto de Artes e Design &bull; UFJF</div>
+      <h1 class="header-title">Solicitação de Demanda de Materiais${idStr}</h1>
+      <div class="header-sub">Planejamento e Levantamento de Demandas para Licitação (DFD)</div>
+    </div>
+    <div class="email-content">
+      <div class="block-title">Dados do Solicitante e Setor</div>
+      <table class="meta-table">
+        <tr>
+          <td class="meta-label">Solicitante:</td>
+          <td class="meta-val">${escapeHtml(dados.nome || '-')}</td>
+          <td class="meta-label">SIAPE:</td>
+          <td class="meta-val">${escapeHtml(dados.siape || '-')}</td>
+        </tr>
+        <tr>
+          <td class="meta-label">Setor / Depto:</td>
+          <td class="meta-val">${escapeHtml(dados.setor || '-')}</td>
+          <td class="meta-label">E-mail:</td>
+          <td class="meta-val"><a href="mailto:${dados.email}" style="color: #2563eb; text-decoration: none;">${escapeHtml(dados.email || '-')}</a></td>
+        </tr>
+        <tr>
+          <td class="meta-label">Categoria:</td>
+          <td class="meta-val" colspan="3"><span style="background: #e2e8f0; padding: 2px 7px; border-radius: 4px; font-size: 11px;">${escapeHtml(dados.categoria || 'Consumo')}</span></td>
+        </tr>
+      </table>
+
+      <div class="block-title">Finalidade / Justificativa Geral</div>
+      <div class="justificativa-card">
+        ${escapeHtml(dados.justificativa || 'Não informada').replace(/\n/g, '<br>')}
+      </div>
+
+      <div class="block-title">Itens Demandados (${itens.length})</div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 25px; text-align: center;">#</th>
+            <th>Código / Descrição do Material</th>
+            <th style="width: 75px; text-align: center;">Prioridade</th>
+            <th style="width: 65px; text-align: center;">Qtd.</th>
+            <th style="width: 85px; text-align: right;">Preço Méd.</th>
+            <th style="width: 95px; text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itens.map((it, idx) => {
+            const vUnit = Number(it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0));
+            const qtd = Number(it.quantidade || 1);
+            const subtotal = Number(it.valor_total_estimado !== undefined ? it.valor_total_estimado : (it.valor_total || (vUnit * qtd)));
+            const prio = it.prioridade || 'Média';
+            const prioClass = prio.includes('Alta') ? 'prio-alta' : (prio.includes('Baixa') ? 'prio-baixa' : 'prio-media');
+            const un = it.unidade || it.unidade_medida || 'UN';
+
+            return `
+              <tr>
+                <td style="text-align: center; color: #64748b; font-weight: 700;">${idx + 1}</td>
+                <td>
+                  <span style="font-family: monospace; font-size: 10px; background: #e0f2fe; color: #0369a1; padding: 1px 5px; border-radius: 3px;">${escapeHtml(it.codigo || '-')}</span>
+                  <div style="font-weight: 700; color: #0f172a; margin-top: 3px;">${escapeHtml(it.descricao || 'Material')}</div>
+                  ${it.especificacoes || it.observacoes ? `<div style="font-size: 11px; color: #475569; margin-top: 2px;"><em>Espec.:</em> ${escapeHtml(it.especificacoes || it.observacoes)}</div>` : ''}
+                  ${it.links ? `<div style="font-size: 11px; margin-top: 2px;"><a href="${it.links.startsWith('http') ? escapeHtml(it.links) : 'https://' + escapeHtml(it.links)}" target="_blank" style="color: #2563eb;">Link de Referência</a></div>` : ''}
+                </td>
+                <td style="text-align: center;"><span class="badge-prio ${prioClass}">${escapeHtml(prio)}</span></td>
+                <td style="text-align: center; font-weight: 700;">${qtd} ${escapeHtml(un)}</td>
+                <td style="text-align: right; color: #475569;">${formatarMoeda(vUnit)}</td>
+                <td style="text-align: right; font-weight: 700; color: #1e3a8a;">${formatarMoeda(subtotal)}</td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <div class="total-box">
+        <div class="lbl">Estimativa Total da Demanda</div>
+        <div class="val">${totalFormatado}</div>
+      </div>
+    </div>
+
+    <div class="email-footer">
+      <strong>Instituto de Artes e Design &bull; Universidade Federal de Juiz de Fora (UFJF)</strong><br>
+      Sistema de Cadastramento e Levantamento de Demandas para Licitação (DFD)
+    </div>
+  </div>
+</body>
+</html>
+      `.trim();
+    }
+
+    // GERADOR DE E-MAIL EM FORMATO TEXTO PURO (LIMPO E SUCINTO PARA GMAIL COMPOSE)
+    function construirCorpoEmailTexto(dados) {
+      const itens = Array.isArray(dados.itens) ? dados.itens : [];
+      const idStr = dados.id ? ` #${dados.id}` : '';
+      const totalFormatado = formatarMoeda(dados.totalGeral || 0);
+
+      let txt = `SOLICITAÇÃO DE DEMANDA DE MATERIAIS${idStr} — IAD/UFJF\n\n`;
+      txt += `DADOS DO SOLICITANTE:\n`;
+      txt += `• Solicitante:   ${dados.nome || '-'}\n`;
+      txt += `• Setor / Depto: ${dados.setor || '-'}\n`;
+      txt += `• SIAPE:         ${dados.siape || '-'}\n`;
+      txt += `• E-mail:        ${dados.email || '-'}\n`;
+      txt += `• Categoria:     ${dados.categoria || 'Consumo'}\n\n`;
+
+      txt += `JUSTIFICATIVA GERAL:\n`;
+      txt += `${dados.justificativa || 'Não informada'}\n\n`;
+
+      txt += `ITENS DEMANDADOS (${itens.length}):\n`;
+      itens.forEach((it, idx) => {
+        const vUnit = Number(it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0));
+        const qtd = Number(it.quantidade || 1);
+        const subtotal = Number(it.valor_total_estimado !== undefined ? it.valor_total_estimado : (it.valor_total || (vUnit * qtd)));
+        const un = it.unidade || it.unidade_medida || 'UN';
+
+        txt += `\nItem ${idx + 1}:\n`;
+        txt += `  • Código:      ${it.codigo || '-'}\n`;
+        txt += `  • Descrição:   ${it.descricao || '-'}\n`;
+        txt += `  • Prioridade:  ${it.prioridade || 'Média'}\n`;
+        txt += `  • Quantidade:  ${qtd} ${un}\n`;
+        txt += `  • Preço Médio: ${formatarMoeda(vUnit)}\n`;
+        txt += `  • Subtotal:    ${formatarMoeda(subtotal)}\n`;
+        if (it.especificacoes || it.observacoes) {
+          txt += `  • Espec.:      ${it.especificacoes || it.observacoes}\n`;
+        }
+        if (it.links) {
+          txt += `  • Link Ref.:   ${it.links}\n`;
+        }
+      });
+
+      txt += `\nESTIMATIVA TOTAL: ${totalFormatado}\n\n`;
+      txt += `Sistema de Demandas (DFD) — Instituto de Artes e Design / UFJF\n`;
+      return txt;
+    }
+
     async function enviarSolicitacaoAoSetorRequisitante() {
       const nome = (document.getElementById("nomeSolicitante").value || "").trim();
       const setor = (document.getElementById("setorSolicitante").value || "").trim();
@@ -2587,60 +2759,29 @@
       const destinatario = "suprimentos.iad@ufjf.br";
       const assunto = `Solicitação de Demanda de Materiais - ${setor} (${nome})`;
 
-      // Montagem do corpo texto puro
-      let corpo = `SOLICITAÇÃO DE DEMANDA DE MATERIAIS — IAD/UFJF\n`;
-      corpo += `========================================================================\n\n`;
-      corpo += `DADOS DO SOLICITANTE / SETOR REQUISITANTE:\n`;
-      corpo += `------------------------------------------------------------------------\n`;
-      corpo += `Solicitante:     ${nome}\n`;
-      corpo += `Setor / Depto:   ${setor}\n`;
-      corpo += `SIAPE:           ${siape}\n`;
-      corpo += `E-mail:          ${email}\n`;
-      corpo += `Categoria:       ${categoria}\n`;
-      corpo += `Justificativa:   ${justificativaGeral}\n\n`;
-      corpo += `Destinatário:    suprimentos.iad@ufjf.br (Setor de Suprimentos / IAD)\n\n`;
-      corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
-      corpo += `------------------------------------------------------------------------\n`;
-
-      itensDaDemanda.forEach((it, idx) => {
-        const subtotal = it.quantidade * it.valor_unitario;
-        corpo += `Item ${idx + 1}:\n`;
-        corpo += `  • ID IAD:          ${it.id_item || "-"}\n`;
-        corpo += `  • Código:          ${it.codigo}\n`;
-        corpo += `  • Descrição:       ${it.descricao}\n`;
-        corpo += `  • Subelemento:     ${it.subelemento} - ${it.desc_subelemento || 'Geral'}\n`;
-        corpo += `  • Prioridade:      ${it.prioridade || 'Média'}\n`;
-        corpo += `  • Quantidade:      ${it.quantidade} ${it.unidade}\n`;
-        corpo += `  • Preço Médio:     ${formatarMoeda(it.valor_unitario)}\n`;
-        corpo += `  • Subtotal Estim.: ${formatarMoeda(subtotal)}\n`;
-        if (it.links) {
-          corpo += `  • Link(s) Ref.:    ${it.links}\n`;
-        }
-        if (it.especificacoes) {
-          corpo += `  • Especificações:  ${it.especificacoes}\n`;
-        }
-        corpo += `\n`;
-      });
-
-      corpo += `------------------------------------------------------------------------\n`;
-      corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
-      corpo += `========================================================================\n\n`;
-      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF através de ${email}.\n`;
-
-      // Payload estruturado para o Google Apps Script (com replyTo e destinatário exclusivo)
-      const payload = {
+      const dadosDemanda = {
         nome: nome,
         setor: setor,
         siape: siape,
         email: email,
+        categoria: categoria,
+        justificativa: justificativaGeral,
+        totalGeral: totalGeral,
+        itens: itensDaDemanda
+      };
+
+      const corpoTexto = construirCorpoEmailTexto(dadosDemanda);
+      const corpoHtml = construirCorpoEmailHtml(dadosDemanda);
+
+      // Payload estruturado para o Google Apps Script (com HTML formatado e replyTo do demandante)
+      const payload = {
+        ...dadosDemanda,
         remetente: email,
         replyTo: email,
         destinatario: destinatario,
-        categoria: categoria,
-        justificativa: justificativaGeral,
         totalGeral: formatarMoeda(totalGeral),
-        corpoTexto: corpo,
-        itens: itensDaDemanda
+        corpoTexto: corpoTexto,
+        corpoHtml: corpoHtml
       };
 
       // 1. OBRIGATÓRIO: Salvar a demanda no banco central (Supabase) antes de qualquer envio de e-mail!
@@ -2648,7 +2789,7 @@
 
       const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
 
-      // 2. Se houver Webhook do Google Apps Script configurado, envia registro/notificação em segundo plano
+      // 2. Se houver Webhook do Google Apps Script configurado, envia em segundo plano com HTML formal
       if (webhookUrl) {
         try {
           fetch(webhookUrl, {
@@ -2661,10 +2802,10 @@
       }
 
       // 3. Abertura do e-mail do próprio demandante (remetente = conta cadastrada do usuário)
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpoTexto)}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpoTexto)}`;
 
-      navigator.clipboard?.writeText(corpo).catch(() => {});
+      navigator.clipboard?.writeText(corpoTexto).catch(() => {});
 
       // Abre o Gmail Institucional UFJF em nova aba (permite que o demandante envie legitimamente de sua própria caixa)
       const janelaGmail = window.open(gmailUrl, "_blank");
@@ -3926,64 +4067,32 @@
 
       const totalGeral = sol.estimativa_total || itens.reduce((acc, it) => acc + (it.quantidade * (it.valor_unitario_estimado || it.valor_unitario || 0)), 0);
       const destinatario = "suprimentos.iad@ufjf.br";
-      const assunto = `Solicitação de Demanda de Materiais - ${sol.setor_solicitante} (${sol.nome_solicitante})`;
+      const assunto = `Solicitação de Demanda de Materiais #${sol.id} - ${sol.setor_solicitante} (${sol.nome_solicitante})`;
 
-      // Corpo texto puro
-      let corpo = `SOLICITAÇÃO DE DEMANDA DE MATERIAIS — IAD/UFJF\n`;
-      corpo += `========================================================================\n\n`;
-      corpo += `DADOS DO SOLICITANTE / SETOR REQUISITANTE:\n`;
-      corpo += `------------------------------------------------------------------------\n`;
-      corpo += `Demanda Nº:      #${sol.id}\n`;
-      corpo += `Solicitante:     ${sol.nome_solicitante}\n`;
-      corpo += `Setor / Depto:   ${sol.setor_solicitante}\n`;
-      corpo += `SIAPE:           ${sol.siape}\n`;
-      corpo += `E-mail:          ${sol.email}\n`;
-      corpo += `Categoria:       ${sol.categoria}\n`;
-      corpo += `Justificativa:   ${sol.justificativa || 'Não informada'}\n\n`;
-      corpo += `Destinatário:    suprimentos.iad@ufjf.br (Setor de Suprimentos / IAD)\n\n`;
-      corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
-      corpo += `------------------------------------------------------------------------\n`;
-
-      itens.forEach((it, idx) => {
-        const vUnit = it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0);
-        const subtotal = it.quantidade * vUnit;
-        corpo += `Item ${idx + 1}:\n`;
-        corpo += `  • ID IAD:          ${it.id_item || '-'}\n`;
-        corpo += `  • Código:          ${it.codigo}\n`;
-        corpo += `  • Descrição:       ${it.descricao}\n`;
-        corpo += `  • Subelemento:     ${it.subelemento || ''} - ${it.desc_subelemento || 'Geral'}\n`;
-        corpo += `  • Prioridade:      ${it.prioridade || 'Média'}\n`;
-        corpo += `  • Quantidade:      ${it.quantidade} ${it.unidade}\n`;
-        corpo += `  • Preço Médio:     ${formatarMoeda(vUnit)}\n`;
-        corpo += `  • Subtotal Estim.: ${formatarMoeda(subtotal)}\n`;
-        if (it.links) corpo += `  • Link(s) Ref.:    ${it.links}\n`;
-        if (it.especificacoes || it.observacoes) corpo += `  • Especificações:  ${it.especificacoes || it.observacoes}\n`;
-        corpo += `\n`;
-      });
-
-      corpo += `------------------------------------------------------------------------\n`;
-      corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
-      corpo += `========================================================================\n\n`;
-      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF através de ${sol.email}.\n`;
-
-      // Payload para o Google Apps Script (com replyTo do solicitante)
-      const payload = {
+      const dadosDemanda = {
         id: sol.id,
         nome: sol.nome_solicitante,
         setor: sol.setor_solicitante,
         siape: sol.siape,
         email: sol.email,
+        categoria: sol.categoria,
+        justificativa: sol.justificativa,
+        totalGeral: totalGeral,
+        itens: itens
+      };
+
+      const corpoTexto = construirCorpoEmailTexto(dadosDemanda);
+      const corpoHtml = construirCorpoEmailHtml(dadosDemanda);
+
+      // Payload para o Google Apps Script (com HTML formatado e replyTo do demandante)
+      const payload = {
+        ...dadosDemanda,
         remetente: sol.email,
         replyTo: sol.email,
         destinatario: destinatario,
-        categoria: sol.categoria,
-        justificativa: sol.justificativa || "",
         totalGeral: formatarMoeda(totalGeral),
-        corpoTexto: corpo,
-        itens: itens.map(it => ({
-          ...it,
-          valor_unitario: it.valor_unitario_estimado !== undefined ? it.valor_unitario_estimado : (it.valor_unitario || 0)
-        }))
+        corpoTexto: corpoTexto,
+        corpoHtml: corpoHtml
       };
 
       // Atualiza status para 'Enviada'
@@ -4008,10 +4117,10 @@
       }
 
       // Abertura do e-mail oficial do demandante (para que a mensagem seja remetida pelo e-mail cadastrado por ele)
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpoTexto)}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpoTexto)}`;
 
-      navigator.clipboard?.writeText(corpo).catch(() => {});
+      navigator.clipboard?.writeText(corpoTexto).catch(() => {});
 
       const janelaGmail = window.open(gmailUrl, "_blank");
       if (!janelaGmail || janelaGmail.closed || typeof janelaGmail.closed === "undefined") {
