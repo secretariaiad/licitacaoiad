@@ -4,18 +4,48 @@
  * (Nenhum outro e-mail em cópia, nem Secretaria, nem Felipe, nem Josué, nem Xandó)
  * 
  * ============================================================================
- * COMO ATUALIZAR NO GOOGLE APPS SCRIPT (script.google.com):
+ * COMO ATIVAR A PERMISSÃO E IMPLANTAR NO GOOGLE APPS SCRIPT (script.google.com):
  * ============================================================================
  * 1. Acesse https://script.google.com com sua conta @ufjf.br
  * 2. Abra o projeto do script de envio
  * 3. Substitua TODO o código do arquivo 'Code.gs' por este código abaixo
- * 4. Clique em "Implantar" (canto superior direito) > "Gerenciar implantações"
- * 5. Clique no ícone de lápis (Editar) na versão ativa:
- *    - Versão: selecione "Nova versão"
+ * 4. Salve (Ctrl + S ou ícone de disquete)
+ * 
+ * 5. ATIVAÇÃO DA PERMISSÃO DO GMAIL (OBRIGATÓRIO FAZER UMA VEZ):
+ *    - Na barra superior do editor, clique no menu suspenso de funções (onde diz 'doPost' ou 'doGet')
+ *    - Selecione a função: 'testarPermissao'
+ *    - Clique no botão 'Executar' (ao lado do menu suspenso)
+ *    - O Google exibirá a janela: "Autorização necessária"
+ *    - Clique em "Revisar permissões" -> escolha sua conta (felipe.braga@ufjf.br)
+ *    - Se aparecer a tela "O Google não verificou este app", clique em "Avançado" -> "Acessar (não seguro)" -> "Permitir"
+ *    - Pronto! Você verá a mensagem "Execução concluída" e receberá um e-mail teste em suprimentos.iad@ufjf.br!
+ * 
+ * 6. ATUALIZAR A IMPLANTAÇÃO:
+ *    - Clique em "Implantar" (canto superior direito) > "Gerenciar implantações"
+ *    - Clique no ícone de lápis (Editar) na versão ativa
+ *    - No campo Versão, selecione "Nova versão"
  *    - Executar como: "Eu (felipe.braga@ufjf.br)"
  *    - Quem pode acessar: "Qualquer pessoa"
- * 6. Clique no botão azul "Implantar"
+ *    - Clique no botão azul "Implantar"
  */
+
+// FUNÇÃO PARA ATIVAR A PERMISSÃO DO GMAIL NO GOOGLE APPS SCRIPT
+function testarPermissao() {
+  var destinatario = "suprimentos.iad@ufjf.br";
+  var assunto = "✓ Teste de Permissão do Sistema DFD — IAD/UFJF";
+  var corpoTexto = "A permissão do Google Apps Script para envio de e-mails foi autorizada com sucesso!";
+  var htmlTeste = '<div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">'
+    + '<h2 style="color: #1e40af; margin-top: 0;">✓ Permissão Autorizada com Sucesso!</h2>'
+    + '<p>O Google Apps Script agora tem permissão para enviar os e-mails com <strong>tabelas e formatação HTML</strong> automaticamente para <strong>suprimentos.iad@ufjf.br</strong>.</p>'
+    + '</div>';
+
+  GmailApp.sendEmail(destinatario, assunto, corpoTexto, {
+    name: "Sistema DFD — Teste de Permissão",
+    htmlBody: htmlTeste
+  });
+
+  Logger.log("Permissão concedida com sucesso! E-mail de teste enviado para " + destinatario);
+}
 
 function doPost(e) {
   try {
