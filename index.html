@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261119_15"></script>
-  <script src="auth.js?v=20261119_15"></script>
-  <script src="demandas-supabase.js?v=20261119_15"></script>
+  <script src="supabase-config.js?v=20261123_01"></script>
+  <script src="auth.js?v=20261123_01"></script>
+  <script src="demandas-supabase.js?v=20261123_01"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -1646,8 +1646,8 @@
             <button type="submit" class="btn btn-secondary btn-lg" style="background: #475569; color: white; border: none;">
               <i data-lucide="save" style="width: 18px; height: 18px;"></i> Salvar Demanda no Sistema
             </button>
-            <button type="button" class="btn btn-primary btn-lg" style="background: #059669; border-color: #059669;" onclick="enviarSolicitacaoAoSetorRequisitante()">
-              <i data-lucide="mail-check" style="width: 18px; height: 18px;"></i> Enviar Solicitação ao Setor Requisitante
+            <button type="button" class="btn btn-primary btn-lg" style="background: #059669; border-color: #059669;" onclick="enviarSolicitacaoAoSetorRequisitante()" title="Grava a demanda e abre o seu e-mail institucional para envio a suprimentos.iad@ufjf.br">
+              <i data-lucide="mail-check" style="width: 18px; height: 18px;"></i> Enviar para Suprimentos por E-mail
             </button>
           </div>
         </div>
@@ -1711,8 +1711,8 @@
           <button class="btn btn-outline" id="btnModalEditar" onclick="editarSolicitacaoDoModal()" style="color: #1e3a8a;">
             <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i> Editar Demanda
           </button>
-          <button class="btn btn-success" id="btnModalEnviar" onclick="enviarSolicitacaoDoModal()" style="background: #059669; border-color: #059669;">
-            <i data-lucide="send" style="width: 16px; height: 16px;"></i> Enviar por E-mail
+          <button class="btn btn-success" id="btnModalEnviar" onclick="enviarSolicitacaoDoModal()" style="background: #059669; border-color: #059669;" title="Abrir e-mail institucional para envio a suprimentos.iad@ufjf.br">
+            <i data-lucide="send" style="width: 16px; height: 16px;"></i> Enviar para Suprimentos por E-mail
           </button>
           <button class="btn btn-outline" id="btnModalExcluir" onclick="excluirSolicitacaoDoModal()" style="color: #dc2626; border-color: #fecaca; display: none;" title="Excluir Demanda (Administrador)">
             <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Excluir Demanda
@@ -2584,8 +2584,7 @@
       }
 
       const totalGeral = itensDaDemanda.reduce((acc, it) => acc + (it.quantidade * it.valor_unitario), 0);
-      const destinatario = "secretaria.iad@ufjf.br";
-      const cc = "josue.ferreira@ufjf.br,andre.xando@ufjf.br";
+      const destinatario = "suprimentos.iad@ufjf.br";
       const assunto = `Solicitação de Demanda de Materiais - ${setor} (${nome})`;
 
       // Montagem do corpo texto puro
@@ -2599,6 +2598,7 @@
       corpo += `E-mail:          ${email}\n`;
       corpo += `Categoria:       ${categoria}\n`;
       corpo += `Justificativa:   ${justificativaGeral}\n\n`;
+      corpo += `Destinatário:    suprimentos.iad@ufjf.br (Setor de Suprimentos / IAD)\n\n`;
       corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
       corpo += `------------------------------------------------------------------------\n`;
 
@@ -2611,8 +2611,7 @@
         corpo += `  • Subelemento:     ${it.subelemento} - ${it.desc_subelemento || 'Geral'}\n`;
         corpo += `  • Prioridade:      ${it.prioridade || 'Média'}\n`;
         corpo += `  • Quantidade:      ${it.quantidade} ${it.unidade}\n`;
-        corpo += `  • Preço Médio:     ${formatarMoeda(it.valor_unitario)}
-`;
+        corpo += `  • Preço Médio:     ${formatarMoeda(it.valor_unitario)}\n`;
         corpo += `  • Subtotal Estim.: ${formatarMoeda(subtotal)}\n`;
         if (it.links) {
           corpo += `  • Link(s) Ref.:    ${it.links}\n`;
@@ -2626,14 +2625,17 @@
       corpo += `------------------------------------------------------------------------\n`;
       corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
       corpo += `========================================================================\n\n`;
-      corpo += `Enviado automaticamente pelo Sistema de Demandas do IAD/UFJF.\n`;
+      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF através de ${email}.\n`;
 
-      // Payload estruturado para o Google Apps Script
+      // Payload estruturado para o Google Apps Script (com replyTo e destinatário exclusivo)
       const payload = {
         nome: nome,
         setor: setor,
         siape: siape,
         email: email,
+        remetente: email,
+        replyTo: email,
+        destinatario: destinatario,
         categoria: categoria,
         justificativa: justificativaGeral,
         totalGeral: formatarMoeda(totalGeral),
@@ -2646,38 +2648,40 @@
 
       const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
 
-      // 2. Se houver Webhook do Google Apps Script configurado, envia 100% automático em segundo plano
+      // 2. Se houver Webhook do Google Apps Script configurado, envia registro/notificação em segundo plano
       if (webhookUrl) {
-        mostrarToast("Enviando e-mail de notificação em segundo plano...", "info");
         try {
-          await fetch(webhookUrl, {
+          fetch(webhookUrl, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(payload)
-          });
-
-          mostrarToast("✓ Solicitação gravada no sistema e enviada por e-mail para secretaria.iad@ufjf.br!", "success");
-          return;
-        } catch (err) {
-          console.warn("Falha no Google Apps Script, recorrendo ao mailto:", err);
-        }
+          }).catch(err => console.warn("Aviso no webhook em segundo plano:", err));
+        } catch (err) {}
       }
 
-      // 3. Fallback: se não houver webhook ou falhar, abre mailto transparente
-      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      
-      let iframe = document.getElementById("hiddenMailFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "hiddenMailFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      iframe.src = mailtoUrl;
+      // 3. Abertura do e-mail do próprio demandante (remetente = conta cadastrada do usuário)
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
 
       navigator.clipboard?.writeText(corpo).catch(() => {});
-      mostrarToast("✓ Solicitação gravada no sistema! Abrindo cliente de e-mail...", "success");
+
+      // Abre o Gmail Institucional UFJF em nova aba (permite que o demandante envie legitimamente de sua própria caixa)
+      const janelaGmail = window.open(gmailUrl, "_blank");
+
+      // Se o navegador bloquear o popup, dispara o mailto como contingência
+      if (!janelaGmail || janelaGmail.closed || typeof janelaGmail.closed === "undefined") {
+        let iframe = document.getElementById("hiddenMailFrame");
+        if (!iframe) {
+          iframe = document.createElement("iframe");
+          iframe.id = "hiddenMailFrame";
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
+        }
+        iframe.src = mailtoUrl;
+      }
+
+      mostrarToast(`✓ Demanda salva! Abrindo seu e-mail institucional (${email}) para envio a suprimentos.iad@ufjf.br...`, "success");
     }
 
     function configurarWebhookAppsScript() {
@@ -3921,8 +3925,7 @@
       }
 
       const totalGeral = sol.estimativa_total || itens.reduce((acc, it) => acc + (it.quantidade * (it.valor_unitario_estimado || it.valor_unitario || 0)), 0);
-      const destinatario = "secretaria.iad@ufjf.br";
-      const cc = "josue.ferreira@ufjf.br,andre.xando@ufjf.br";
+      const destinatario = "suprimentos.iad@ufjf.br";
       const assunto = `Solicitação de Demanda de Materiais - ${sol.setor_solicitante} (${sol.nome_solicitante})`;
 
       // Corpo texto puro
@@ -3937,6 +3940,7 @@
       corpo += `E-mail:          ${sol.email}\n`;
       corpo += `Categoria:       ${sol.categoria}\n`;
       corpo += `Justificativa:   ${sol.justificativa || 'Não informada'}\n\n`;
+      corpo += `Destinatário:    suprimentos.iad@ufjf.br (Setor de Suprimentos / IAD)\n\n`;
       corpo += `TABELA DE MATERIAIS DEMANDADOS:\n`;
       corpo += `------------------------------------------------------------------------\n`;
 
@@ -3960,14 +3964,18 @@
       corpo += `------------------------------------------------------------------------\n`;
       corpo += `ESTIMATIVA TOTAL DA DEMANDA: ${formatarMoeda(totalGeral)}\n`;
       corpo += `========================================================================\n\n`;
-      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF.\n`;
+      corpo += `Enviado pelo Sistema de Demandas do IAD/UFJF através de ${sol.email}.\n`;
 
-      // Payload para o Google Apps Script
+      // Payload para o Google Apps Script (com replyTo do solicitante)
       const payload = {
+        id: sol.id,
         nome: sol.nome_solicitante,
         setor: sol.setor_solicitante,
         siape: sol.siape,
         email: sol.email,
+        remetente: sol.email,
+        replyTo: sol.email,
+        destinatario: destinatario,
         categoria: sol.categoria,
         justificativa: sol.justificativa || "",
         totalGeral: formatarMoeda(totalGeral),
@@ -3978,45 +3986,46 @@
         }))
       };
 
+      // Atualiza status para 'Enviada'
+      const idx = historicoLocal.findIndex(s => String(s.id) === String(id));
+      if (idx !== -1) {
+        historicoLocal[idx].status = "Enviada por E-mail";
+        localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
+        carregarHistoricoSolicitacoes();
+      }
+
       const webhookUrl = localStorage.getItem("gas_webhook_url") || GOOGLE_APPS_SCRIPT_URL;
 
       if (webhookUrl) {
-        mostrarToast(`Enviando Demanda #${sol.id} por e-mail em segundo plano...`, "info");
         try {
-          await fetch(webhookUrl, {
+          fetch(webhookUrl, {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(payload)
-          });
-
-          // Atualiza status para 'Enviada'
-          const idx = historicoLocal.findIndex(s => s.id === id);
-          if (idx !== -1) {
-            historicoLocal[idx].status = "Enviada por E-mail";
-            localStorage.setItem(KEY_SOLICITACOES, JSON.stringify(historicoLocal));
-            carregarHistoricoSolicitacoes();
-          }
-
-          mostrarToast(`✓ Demanda #${sol.id} enviada com sucesso para secretaria.iad@ufjf.br!`, "success");
-          return;
-        } catch (err) {
-          console.warn("Falha no envio via webhook:", err);
-        }
+          }).catch(err => console.warn("Aviso no envio webhook:", err));
+        } catch (err) {}
       }
 
-      // Fallback mailto
-      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-      let iframe = document.getElementById("hiddenMailFrame");
-      if (!iframe) {
-        iframe = document.createElement("iframe");
-        iframe.id = "hiddenMailFrame";
-        iframe.style.display = "none";
-        document.body.appendChild(iframe);
-      }
-      iframe.src = mailtoUrl;
+      // Abertura do e-mail oficial do demandante (para que a mensagem seja remetida pelo e-mail cadastrado por ele)
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(destinatario)}&su=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(destinatario)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+
       navigator.clipboard?.writeText(corpo).catch(() => {});
-      mostrarToast(`Demanda #${sol.id} preparada! Abrindo cliente de e-mail...`, "success");
+
+      const janelaGmail = window.open(gmailUrl, "_blank");
+      if (!janelaGmail || janelaGmail.closed || typeof janelaGmail.closed === "undefined") {
+        let iframe = document.getElementById("hiddenMailFrame");
+        if (!iframe) {
+          iframe = document.createElement("iframe");
+          iframe.id = "hiddenMailFrame";
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
+        }
+        iframe.src = mailtoUrl;
+      }
+
+      mostrarToast(`✓ Demanda #${sol.id} gravada! Abrindo seu e-mail institucional (${sol.email}) para envio a suprimentos.iad@ufjf.br...`, "success");
     }
 
     function editarSolicitacaoDoModal() {

@@ -80,7 +80,7 @@ O sistema conta com o mesmo mecanismo de autenticação seguro utilizado na **Se
    - Cálculo automático do custo total estimado da demanda.
 
 3. **Envio e Exportação**:
-   - Envio automático por e-mail em segundo plano para o setor de compras (`secretaria.iad@ufjf.br`).
+   - Envio automático por e-mail pelo endereço institucional cadastrado do próprio demandante exclusivamente para o setor de suprimentos (`suprimentos.iad@ufjf.br`).
    - Modal de visualização com formatação para impressão e geração de relatórios / DFD oficial.
 
 ---
