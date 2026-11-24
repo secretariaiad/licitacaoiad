@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261124_01"></script>
-  <script src="auth.js?v=20261124_01"></script>
-  <script src="demandas-supabase.js?v=20261124_01"></script>
+  <script src="supabase-config.js?v=20261124_02"></script>
+  <script src="auth.js?v=20261124_02"></script>
+  <script src="demandas-supabase.js?v=20261124_02"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -1225,19 +1225,19 @@
           <div class="auth-form-group">
             <label for="cadSetor">Departamento / Setor *</label>
             <select id="cadSetor" required>
-              <option value="Secretaria do IAD">Secretaria do IAD</option>
               <option value="Direção do IAD">Direção do IAD</option>
-              <option value="Artes Visuais">Artes Visuais</option>
-              <option value="Bacharelado em Design">Bacharelado em Design</option>
-              <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
-              <option value="Moda">Moda</option>
-              <option value="Música">Música</option>
-              <option value="Laboratórios">Laboratórios</option>
-              <option value="Biblioteca do IAD">Biblioteca do IAD</option>
-              <option value="Tecnologia da Informação / TI">Tecnologia da Informação / TI</option>
-              <option value="Serviços Gerais / Terceirizados">Serviços Gerais / Terceirizados</option>
-              <option value="Galeria de Arte do IAD">Galeria de Arte do IAD</option>
-              <option value="Pós-Graduação (PPG)">Pós-Graduação (PPG)</option>
+              <option value="Secretaria do IAD">Secretaria do IAD</option>
+              <option value="Departamento de Artes">Departamento de Artes</option>
+              <option value="Departamento de Música">Departamento de Música</option>
+              <option value="Coordenação - Bacharelado em Design">Coordenação - Bacharelado em Design</option>
+              <option value="Coordenação - Bacharelado em Cinema e Audiovisual">Coordenação - Bacharelado em Cinema e Audiovisual</option>
+              <option value="Coordenação - Bacharelado em Música">Coordenação - Bacharelado em Música</option>
+              <option value="Coordenação - Bacharelado em Artes Visuais">Coordenação - Bacharelado em Artes Visuais</option>
+              <option value="Coordenação - Bacharelado em Moda">Coordenação - Bacharelado em Moda</option>
+              <option value="Coordenação - Licenciatura em Artes Visuais">Coordenação - Licenciatura em Artes Visuais</option>
+              <option value="Coordenação - Licenciatura em Música">Coordenação - Licenciatura em Música</option>
+              <option value="Auxiliar de Laboratório">Auxiliar de Laboratório</option>
+              <option value="T.I">T.I</option>
               <option value="Outro">Outro</option>
             </select>
           </div>
@@ -1410,19 +1410,19 @@
                 <label for="setorSolicitante">Departamento ou Setor Solicitante <span class="required">*</span></label>
                 <select id="setorSolicitante" class="form-control" required onchange="dispararAutoSave()">
                   <option value="">Selecione o setor...</option>
-                  <option value="Secretaria do IAD">Secretaria do IAD</option>
                   <option value="Direção do IAD">Direção do IAD</option>
-                  <option value="Artes Visuais">Artes Visuais</option>
-                  <option value="Bacharelado em Design">Bacharelado em Design</option>
-                  <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
-                  <option value="Moda">Moda</option>
-                  <option value="Música">Música</option>
-                  <option value="Laboratórios">Laboratórios</option>
-                  <option value="Biblioteca do IAD">Biblioteca do IAD</option>
-                  <option value="Tecnologia da Informação / TI">Tecnologia da Informação / TI</option>
-                  <option value="Serviços Gerais / Terceirizados">Serviços Gerais / Terceirizados</option>
-                  <option value="Galeria de Arte do IAD">Galeria de Arte do IAD</option>
-                  <option value="Pós-Graduação (PPG)">Pós-Graduação (PPG)</option>
+                  <option value="Secretaria do IAD">Secretaria do IAD</option>
+                  <option value="Departamento de Artes">Departamento de Artes</option>
+                  <option value="Departamento de Música">Departamento de Música</option>
+                  <option value="Coordenação - Bacharelado em Design">Coordenação - Bacharelado em Design</option>
+                  <option value="Coordenação - Bacharelado em Cinema e Audiovisual">Coordenação - Bacharelado em Cinema e Audiovisual</option>
+                  <option value="Coordenação - Bacharelado em Música">Coordenação - Bacharelado em Música</option>
+                  <option value="Coordenação - Bacharelado em Artes Visuais">Coordenação - Bacharelado em Artes Visuais</option>
+                  <option value="Coordenação - Bacharelado em Moda">Coordenação - Bacharelado em Moda</option>
+                  <option value="Coordenação - Licenciatura em Artes Visuais">Coordenação - Licenciatura em Artes Visuais</option>
+                  <option value="Coordenação - Licenciatura em Música">Coordenação - Licenciatura em Música</option>
+                  <option value="Auxiliar de Laboratório">Auxiliar de Laboratório</option>
+                  <option value="T.I">T.I</option>
                   <option value="Outro">Outro</option>
                 </select>
               </div>
