@@ -12,9 +12,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Supabase SDK e Autenticação (100% integrado à Secretaria Virtual e PIT-RIT) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261123_03"></script>
-  <script src="auth.js?v=20261123_03"></script>
-  <script src="demandas-supabase.js?v=20261123_03"></script>
+  <script src="supabase-config.js?v=20261124_01"></script>
+  <script src="auth.js?v=20261124_01"></script>
+  <script src="demandas-supabase.js?v=20261124_01"></script>
   <!-- Base de Itens Ativos (Carregamento nativo 100% compativel com file:// e GitHub Pages) -->
   <script src="itens_catalogo.js"></script>
 
@@ -1227,19 +1227,18 @@
             <select id="cadSetor" required>
               <option value="Secretaria do IAD">Secretaria do IAD</option>
               <option value="Direção do IAD">Direção do IAD</option>
+              <option value="Artes Visuais">Artes Visuais</option>
+              <option value="Bacharelado em Design">Bacharelado em Design</option>
+              <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
+              <option value="Moda">Moda</option>
+              <option value="Música">Música</option>
+              <option value="Laboratórios">Laboratórios</option>
               <option value="Biblioteca do IAD">Biblioteca do IAD</option>
               <option value="Tecnologia da Informação / TI">Tecnologia da Informação / TI</option>
               <option value="Serviços Gerais / Terceirizados">Serviços Gerais / Terceirizados</option>
-              <option value="Ateliês e Laboratórios Práticos">Ateliês e Laboratórios Práticos</option>
-              <option value="Laboratórios de Informática / Mídia">Laboratórios de Informática / Mídia</option>
               <option value="Galeria de Arte do IAD">Galeria de Arte do IAD</option>
-              <option value="Departamento de Artes e Design">Departamento de Artes e Design</option>
-              <option value="Departamento de Cinema e Audiovisual">Departamento de Cinema e Audiovisual</option>
-              <option value="Departamento de Design">Departamento de Design</option>
-              <option value="Departamento de Música">Departamento de Música</option>
-              <option value="Coordenação de Curso">Coordenação de Curso</option>
               <option value="Pós-Graduação (PPG)">Pós-Graduação (PPG)</option>
-              <option value="Outro Setor">Outro Setor</option>
+              <option value="Outro">Outro</option>
             </select>
           </div>
 
@@ -1411,44 +1410,20 @@
                 <label for="setorSolicitante">Departamento ou Setor Solicitante <span class="required">*</span></label>
                 <select id="setorSolicitante" class="form-control" required onchange="dispararAutoSave()">
                   <option value="">Selecione o setor...</option>
-                  
-                  <optgroup label="Gestão e Secretaria">
-                    <option value="DIREÇÃO DO INSTITUTO DE ARTES E DESIGN">DIREÇÃO DO INSTITUTO DE ARTES E DESIGN</option>
-                    <option value="SECRETARIA DO INSTITUTO DE ARTES E DESIGN">SECRETARIA DO INSTITUTO DE ARTES E DESIGN</option>
-                  </optgroup>
-
-                  <optgroup label="Apoio, Serviços e Infraestrutura">
-                    <option value="BIBLIOTECA DO IAD">BIBLIOTECA DO IAD</option>
-                    <option value="TECNOLOGIA DA INFORMAÇÃO / SUPORTE DE TI">TECNOLOGIA DA INFORMAÇÃO / SUPORTE DE TI</option>
-                    <option value="SERVIÇOS GERAIS / MANUTENÇÃO / TERCEIRIZADOS">SERVIÇOS GERAIS / MANUTENÇÃO / TERCEIRIZADOS</option>
-                    <option value="ATELIÊS E LABORATÓRIOS PRÁTICOS">ATELIÊS E LABORATÓRIOS PRÁTICOS</option>
-                    <option value="LABORATÓRIOS DE INFORMÁTICA / MÍDIA">LABORATÓRIOS DE INFORMÁTICA / MÍDIA</option>
-                    <option value="GALERIA DE ARTE / ESPAÇO EXPOSITIVO DO IAD">GALERIA DE ARTE / ESPAÇO EXPOSITIVO DO IAD</option>
-                  </optgroup>
-
-                  <optgroup label="Departamentos Acadêmicos">
-                    <option value="DEPARTAMENTO DE ARTES E DESIGN">DEPARTAMENTO DE ARTES E DESIGN</option>
-                    <option value="DEPARTAMENTO DE CINEMA E AUDIOVISUAL">DEPARTAMENTO DE CINEMA E AUDIOVISUAL</option>
-                    <option value="DEPARTAMENTO DE DESIGN">DEPARTAMENTO DE DESIGN</option>
-                    <option value="DEPARTAMENTO DE MÚSICA">DEPARTAMENTO DE MÚSICA</option>
-                  </optgroup>
-
-                  <optgroup label="Coordenações de Curso">
-                    <option value="COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS">COORDENAÇÃO DO BACHARELADO EM ARTES VISUAIS</option>
-                    <option value="COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS">COORDENAÇÃO DA LICENCIATURA EM ARTES VISUAIS</option>
-                    <option value="COORDENAÇÃO DO CINEMA E AUDIOVISUAL">COORDENAÇÃO DO CINEMA E AUDIOVISUAL</option>
-                    <option value="COORDENAÇÃO DO DESIGN">COORDENAÇÃO DO DESIGN</option>
-                    <option value="COORDENAÇÃO DE MODA">COORDENAÇÃO DE MODA</option>
-                    <option value="COORDENAÇÃO DO BACHARELADO EM MÚSICA">COORDENAÇÃO DO BACHARELADO EM MÚSICA</option>
-                    <option value="COORDENAÇÃO DA LICENCIATURA EM MÚSICA">COORDENAÇÃO DA LICENCIATURA EM MÚSICA</option>
-                    <option value="COORDENAÇÃO BI">COORDENAÇÃO BI</option>
-                    <option value="COORDENAÇÃO DE INTEGRAÇÃO">COORDENAÇÃO DE INTEGRAÇÃO</option>
-                  </optgroup>
-
-                  <optgroup label="Pós-Graduação e Pesquisa">
-                    <option value="PÓS-GRADUAÇÃO EM ARTES, MODA E DESIGN (PPG)">PÓS-GRADUAÇÃO EM ARTES, MODA E DESIGN (PPG)</option>
-                    <option value="NÚCLEO DE EXTENSÃO E PESQUISA DO IAD">NÚCLEO DE EXTENSÃO E PESQUISA DO IAD</option>
-                  </optgroup>
+                  <option value="Secretaria do IAD">Secretaria do IAD</option>
+                  <option value="Direção do IAD">Direção do IAD</option>
+                  <option value="Artes Visuais">Artes Visuais</option>
+                  <option value="Bacharelado em Design">Bacharelado em Design</option>
+                  <option value="Cinema e Audiovisual">Cinema e Audiovisual</option>
+                  <option value="Moda">Moda</option>
+                  <option value="Música">Música</option>
+                  <option value="Laboratórios">Laboratórios</option>
+                  <option value="Biblioteca do IAD">Biblioteca do IAD</option>
+                  <option value="Tecnologia da Informação / TI">Tecnologia da Informação / TI</option>
+                  <option value="Serviços Gerais / Terceirizados">Serviços Gerais / Terceirizados</option>
+                  <option value="Galeria de Arte do IAD">Galeria de Arte do IAD</option>
+                  <option value="Pós-Graduação (PPG)">Pós-Graduação (PPG)</option>
+                  <option value="Outro">Outro</option>
                 </select>
               </div>
 
@@ -1482,16 +1457,26 @@
 
         <!-- 2. SELEÇÃO DE ITENS COM AUTOCOMPLETE DINÂMICO E AUTO-PREENCHIMENTO -->
         <div class="card">
-          <div class="card-header">
-            <h2><i data-lucide="search" style="width: 20px; height: 20px;"></i> 2. Adicionar Itens Demandados (Busca Inteligente no Catálogo)</h2>
-            <span class="badge badge-primary"><i data-lucide="check-circle-2" style="width: 12px; height: 12px;"></i> Catálogo de Materiais</span>
+          <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <h2><i data-lucide="search" style="width: 20px; height: 20px;"></i> 2. Adicionar Itens Demandados (Catálogo CATMAT ou Item Personalizado)</h2>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-outline-primary" id="btnAbrirCustomItem" onclick="abrirFormularioItemPersonalizado()" style="display: inline-flex; align-items: center; gap: 6px; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600; border-radius: 6px; border: 1.5px solid #2563eb; color: #1e40af; background: #eff6ff;">
+                <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i> + Item Fora do Catálogo
+              </button>
+              <span class="badge badge-primary"><i data-lucide="check-circle-2" style="width: 12px; height: 12px;"></i> Catálogo CATMAT</span>
+            </div>
           </div>
           <div class="card-body">
             
             <div class="autocomplete-wrapper">
-              <label style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem; display: block;">
-                Pesquise o item digitando o nome, código ou subelemento (sugestões instantâneas com ordenação inteligente):
-              </label>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 6px;">
+                <label style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0;">
+                  Pesquise o item digitando o nome, código ou subelemento (CATMAT):
+                </label>
+                <button type="button" onclick="abrirFormularioItemPersonalizado(document.getElementById('campoBuscaMaterial').value)" style="background: none; border: none; color: #2563eb; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0;">
+                  Não encontrou o que procura? Incluir item fora do catálogo
+                </button>
+              </div>
               <div class="search-input-wrapper">
                 <i data-lucide="search" style="width: 18px; height: 18px;"></i>
                 <input 
@@ -1589,6 +1574,102 @@
 
               </div>
 
+            </div>
+
+            <!-- PAINEL DE ITEM PERSONALIZADO (FORA DO CATÁLOGO / SEM CATMAT) -->
+            <div id="painelItemCustomizado" class="selected-preview" style="display: none; border-left: 4px solid #f59e0b; background: #fffdf5; margin-top: 1.2rem;">
+              <div class="preview-header">
+                <div>
+                  <h4 style="color: #b45309; display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <i data-lucide="package-plus" style="width: 20px; height: 20px;"></i>
+                    Cadastro de Item Fora do Catálogo Oficial
+                  </h4>
+                  <p style="font-size: 0.78rem; color: #78350f; margin-top: 3px; margin-bottom: 0;">
+                    Preencha as informações do material que você necessita mas que não consta no catálogo padrão do CATMAT:
+                  </p>
+                </div>
+                <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 700;">Item Fora do Catálogo</span>
+              </div>
+
+              <div class="form-grid" style="margin-top: 1rem;">
+                <div class="form-group col-8">
+                  <label for="customDescricao">Descrição Completa do Material / Objeto <span class="required">*</span></label>
+                  <input type="text" id="customDescricao" class="form-control" placeholder="Ex: Papel artesanal kozo japonês 40g, Kit de goivas para xilogravura, Peça sob medida..." required>
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="customCodigo">Código / Part Number / Ref. (Opcional)</label>
+                  <input type="text" id="customCodigo" class="form-control" placeholder="Código de referência ou modelo" value="NÃO CONSTA NO CATMAT">
+                </div>
+
+                <div class="form-group col-3">
+                  <label for="customUnidade">Unidade de Medida <span class="required">*</span></label>
+                  <select id="customUnidade" class="form-control">
+                    <option value="UN" selected>UN - Unidade</option>
+                    <option value="CX">CX - Caixa</option>
+                    <option value="PCT">PCT - Pacote</option>
+                    <option value="KG">KG - Quilo</option>
+                    <option value="G">G - Grama</option>
+                    <option value="L">L - Litro</option>
+                    <option value="ML">ML - Mililitro</option>
+                    <option value="M">M - Metro linear</option>
+                    <option value="M²">M² - Metro quadrado</option>
+                    <option value="ROLO">ROLO - Rolo</option>
+                    <option value="PAR">PAR - Par</option>
+                    <option value="JG">JG - Jogo / Conjunto</option>
+                    <option value="FRASCO">FRASCO - Frasco</option>
+                    <option value="LATA">LATA - Lata</option>
+                    <option value="RESMA">RESMA - Resma</option>
+                    <option value="FOLHA">FOLHA - Folha</option>
+                    <option value="SERVIÇO">SERVIÇO - Serviço</option>
+                  </select>
+                </div>
+
+                <div class="form-group col-2">
+                  <label for="customQtd">Quantidade <span class="required">*</span></label>
+                  <input type="number" id="customQtd" class="form-control" min="1" step="1" value="1" oninput="this.value=this.value.replace(/[^0-9]/g,'');calcularTotalItemCustom()" onkeydown="if(event.key==='.'||event.key===','||event.key==='e'||event.key==='E'||event.key==='-')event.preventDefault()">
+                </div>
+
+                <div class="form-group col-3">
+                  <label for="customValorUnit">Preço Médio Estimado (R$)</label>
+                  <input type="number" id="customValorUnit" class="form-control" min="0" step="0.01" placeholder="0,00" oninput="calcularTotalItemCustom()">
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="customValorTotal">Subtotal Estimado (R$)</label>
+                  <input type="text" id="customValorTotal" class="form-control" readonly value="R$ 0,00" style="background: #f1f5f9; font-weight: 600;">
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="customPrioridade">Prioridade do Item <span class="required">*</span></label>
+                  <select id="customPrioridade" class="form-control" required>
+                    <option value="Alta">Alta</option>
+                    <option value="Média-Alta">Média-Alta</option>
+                    <option value="Média" selected>Média</option>
+                    <option value="Média-Baixa">Média-Baixa</option>
+                    <option value="Baixa">Baixa</option>
+                  </select>
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="customLinks">Link(s) de Referência / Cotação</label>
+                  <input type="text" id="customLinks" class="form-control" placeholder="Cole link(s) de lojas, atas ou pesquisas de preço...">
+                </div>
+
+                <div class="form-group col-4">
+                  <label for="customJustificativa">Especificações Técnicas / Marca / Modelo</label>
+                  <input type="text" id="customJustificativa" class="form-control" placeholder="Requisitos técnicos, marca de referência, dimensões...">
+                </div>
+
+                <div class="form-group col-12" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 0.5rem; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-secondary" onclick="fecharFormularioItemPersonalizado()">
+                    Cancelar / Voltar à Busca
+                  </button>
+                  <button type="button" class="btn btn-success" style="min-width: 260px; height: 42px; background: #059669; border-color: #059669;" onclick="adicionarItemPersonalizadoNaDemanda()">
+                    <i data-lucide="plus" style="width: 18px; height: 18px;"></i> Inserir Item Fora do Catálogo
+                  </button>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -2011,18 +2092,25 @@
     function renderizarSugestoes(itens) {
       const lista = document.getElementById("listaSugestoes");
       indiceSugestaoFocada = -1;
+      const termoDigitado = (document.getElementById("campoBuscaMaterial").value || "").trim();
 
       if (!itens || itens.length === 0) {
         lista.innerHTML = `
-          <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
-            Nenhum material ativo encontrado com o termo digitado.
+          <div style="padding: 1.1rem; text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.6rem;">
+              Nenhum material oficial encontrado no catálogo para "<strong>${escapeHtml(termoDigitado)}</strong>".
+            </p>
+            <button type="button" class="btn btn-primary" onclick="abrirFormularioItemPersonalizado('${escapeHtml(termoDigitado).replace(/'/g, "\\'")}')" style="padding: 0.45rem 1rem; font-size: 0.82rem; background: #059669; border-color: #059669; font-weight: 600;">
+              <i data-lucide="plus-circle" style="width: 14px; height: 14px;"></i> + Incluir "${escapeHtml(termoDigitado)}" fora do catálogo
+            </button>
           </div>
         `;
         lista.style.display = "block";
+        if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
         return;
       }
 
-      lista.innerHTML = itens.map((it, idx) => `
+      let htmlItens = itens.map((it, idx) => `
         <div class="suggestion-item" data-idx="${idx}" onclick="selecionarItemDoCatalogo(${idx})">
           <div class="suggestion-main">${escapeHtml(it.descricao)}</div>
           <div class="suggestion-badges">
@@ -2034,7 +2122,21 @@
         </div>
       `).join("");
 
+      // Opção permanente no fim das sugestões para cadastrar item fora do catálogo
+      htmlItens += `
+        <div class="suggestion-item" onclick="abrirFormularioItemPersonalizado('${escapeHtml(termoDigitado).replace(/'/g, "\\'")}')" style="border-top: 1px dashed #cbd5e1; background: #fffdf5; padding: 10px 14px; cursor: pointer;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div style="font-weight: 700; color: #b45309; font-size: 0.82rem; display: flex; align-items: center; gap: 6px;">
+              <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i> Não encontrou o que procura? Incluir item fora do catálogo
+            </div>
+            <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.68rem; border: 1px solid #fde68a;">Fora do CATMAT</span>
+          </div>
+        </div>
+      `;
+
+      lista.innerHTML = htmlItens;
       lista.style.display = "block";
+      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
     }
 
     function fecharSugestoes() {
@@ -2082,6 +2184,7 @@
       const item = sugestoesAtuais[idx];
       if (!item) return;
 
+      fecharFormularioItemPersonalizado();
       itemSelecionadoAtual = item;
       fecharSugestoes();
 
@@ -2110,6 +2213,108 @@
       const vUnit = parseFloat(document.getElementById("itemValorUnit").value) || 0;
       const tot = qtd * vUnit;
       document.getElementById("itemValorTotal").value = formatarMoeda(tot);
+    }
+
+    // ========================================================================
+    // GESTÃO DE ITENS FORA DO CATÁLOGO (PERSONALIZADOS / SEM CATMAT)
+    // ========================================================================
+    function abrirFormularioItemPersonalizado(nomeInicial) {
+      fecharSugestoes();
+      const painelPuxado = document.getElementById("painelItemPuxado");
+      if (painelPuxado) painelPuxado.classList.remove("show");
+
+      const painelCustom = document.getElementById("painelItemCustomizado");
+      if (!painelCustom) return;
+
+      painelCustom.style.display = "block";
+
+      const campoDesc = document.getElementById("customDescricao");
+      if (nomeInicial && typeof nomeInicial === "string" && nomeInicial.trim()) {
+        campoDesc.value = nomeInicial.trim();
+      } else {
+        campoDesc.value = "";
+      }
+
+      document.getElementById("customCodigo").value = "NÃO CONSTA NO CATMAT";
+      document.getElementById("customUnidade").value = "UN";
+      document.getElementById("customQtd").value = "1";
+      document.getElementById("customValorUnit").value = "";
+      document.getElementById("customValorTotal").value = "R$ 0,00";
+      document.getElementById("customPrioridade").value = "Média";
+      document.getElementById("customLinks").value = "";
+      document.getElementById("customJustificativa").value = "";
+
+      campoDesc.focus();
+      painelCustom.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
+    }
+
+    function fecharFormularioItemPersonalizado() {
+      const painelCustom = document.getElementById("painelItemCustomizado");
+      if (painelCustom) painelCustom.style.display = "none";
+    }
+
+    function calcularTotalItemCustom() {
+      const rawQtd = (document.getElementById("customQtd").value || "").replace(/[^0-9]/g, '');
+      const qtd = parseInt(rawQtd, 10) || 0;
+      const vUnit = parseFloat(document.getElementById("customValorUnit").value) || 0;
+      const tot = qtd * vUnit;
+      document.getElementById("customValorTotal").value = formatarMoeda(tot);
+    }
+
+    function adicionarItemPersonalizadoNaDemanda() {
+      const desc = (document.getElementById("customDescricao").value || "").trim();
+      if (!desc) {
+        mostrarToast("Informe a descrição do material que não consta no catálogo!", "error");
+        document.getElementById("customDescricao").focus();
+        return;
+      }
+
+      const rawQtd = (document.getElementById("customQtd").value || "").trim();
+      if (rawQtd.includes(".") || rawQtd.includes(",")) {
+        mostrarToast("Apenas números inteiros são permitidos na quantidade!", "error");
+        document.getElementById("customQtd").focus();
+        return;
+      }
+      const qtd = parseInt(rawQtd, 10);
+      if (!qtd || isNaN(qtd) || qtd <= 0) {
+        mostrarToast("Informe uma quantidade inteira válida (mínimo 1)!", "error");
+        document.getElementById("customQtd").focus();
+        return;
+      }
+
+      const codigo = (document.getElementById("customCodigo").value || "").trim() || "NÃO CONSTA NO CATMAT";
+      const unidade = (document.getElementById("customUnidade").value || "UN").trim();
+      const vUnit = parseFloat(document.getElementById("customValorUnit").value) || 0;
+      const prioridade = document.getElementById("customPrioridade").value || "Média";
+      const links = (document.getElementById("customLinks").value || "").trim();
+      const specs = (document.getElementById("customJustificativa").value || "").trim();
+
+      const novoItem = {
+        id_item: "CUSTOM",
+        codigo: codigo,
+        descricao: desc,
+        unidade: unidade,
+        elemento: "339030",
+        desc_elemento: "Material",
+        subelemento: "99",
+        desc_subelemento: "Material Fora do Catálogo",
+        quantidade: qtd,
+        valor_unitario: vUnit,
+        valor_total: qtd * vUnit,
+        prioridade: prioridade,
+        links: links,
+        especificacoes: specs,
+        fora_catalogo: true
+      };
+
+      itensDaDemanda.push(novoItem);
+      renderizarTabelaCesta();
+      dispararAutoSave();
+
+      fecharFormularioItemPersonalizado();
+      document.getElementById("campoBuscaMaterial").value = "";
+      mostrarToast("Item personalizado adicionado à demanda com sucesso!", "success");
     }
 
     function adicionarItemNaDemanda() {
@@ -2216,8 +2421,10 @@
           <tr>
             <td style="font-weight: 600; color: var(--text-muted); text-align: center;">${idx + 1}</td>
             <td>
-              <span class="badge badge-primary" style="font-family: monospace;">${escapeHtml(it.codigo)}</span>
-              <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">ID: ${escapeHtml(it.id_item || '-')}</div>
+              ${it.fora_catalogo 
+                ? `<span class="badge" style="font-family: monospace; font-size: 0.68rem; background: #fef3c7; color: #92400e; border: 1px solid #fde68a;">${escapeHtml(it.codigo)}</span><div style="font-size: 0.68rem; color: #b45309; font-weight: 700; margin-top: 2px;">Fora do Catálogo</div>`
+                : `<span class="badge badge-primary" style="font-family: monospace;">${escapeHtml(it.codigo)}</span><div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">ID: ${escapeHtml(it.id_item || '-')}</div>`
+              }
             </td>
             <td>
               <strong style="color: #1e3a8a;">${escapeHtml(it.descricao)}</strong>
