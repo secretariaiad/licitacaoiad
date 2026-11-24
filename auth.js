@@ -887,6 +887,9 @@ const authService = {
         <tbody>
     `;
 
+    const usuarioLogado = this.obterSessao();
+    const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
+
     usuarios.forEach(u => {
       let badgeClass = "badge-pendente";
       let statusLabel = "Aguardando";
@@ -899,21 +902,44 @@ const authService = {
       }
 
       const isAdmin = authService.isUsuarioAdmin(u);
+      const isSuperAdminFixo = this.ADMINS.includes((u.email || "").toLowerCase().trim());
+      const isEuMesmo = emailLogado === (u.email || "").toLowerCase().trim();
+
+      let acaoAdminHtml = "";
+      if (!isSuperAdminFixo && !isEuMesmo && u.status === "aprovado") {
+        if (!isAdmin) {
+          acaoAdminHtml = `
+            <button type="button" class="btn-mod-action btn-mod-admin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', true, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Tornar este usuário Administrador">
+              👑 Tornar Admin
+            </button>
+          `;
+        } else {
+          acaoAdminHtml = `
+            <button type="button" class="btn-mod-action btn-mod-unadmin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', false, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Remover privilégio de Administrador">
+              ✕ Tirar Admin
+            </button>
+          `;
+        }
+      }
 
       html += `
         <tr>
-          <td><strong>${u.nome}</strong> ${isAdmin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">Admin</span>' : ''}</td>
+          <td>
+            <strong>${u.nome}</strong> 
+            ${isAdmin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">Admin</span>' : ''}
+          </td>
           <td>${u.email}</td>
           <td>${u.siape || "-"}</td>
           <td>${u.cargo || "-"} &bull; ${u.setor || "-"}</td>
           <td><span class="status-pill ${badgeClass}">${statusLabel}</span></td>
           <td style="text-align: center; white-space: nowrap;">
-            ${!isAdmin && u.status !== "aprovado" ? `
+            ${u.status !== "aprovado" ? `
               <button type="button" class="btn-mod-action btn-mod-approve" onclick="authService.executarAprovacao('${u.id || u.email}')" title="Aprovar Usuário">✓ Aprovar</button>
             ` : ''}
-            ${!isAdmin && u.status !== "rejeitado" ? `
+            ${!isSuperAdminFixo && !isEuMesmo && u.status !== "rejeitado" ? `
               <button type="button" class="btn-mod-action btn-mod-reject" onclick="authService.executarRejeicao('${u.id || u.email}')" title="Rejeitar / Bloquear Usuário">✕ Rejeitar</button>
             ` : ''}
+            ${acaoAdminHtml}
           </td>
         </tr>
       `;
@@ -921,6 +947,68 @@ const authService = {
 
     html += `</tbody></table>`;
     container.innerHTML = html;
+  },
+
+  async alternarAdminUsuario(userId, novoStatusAdmin) {
+    if (!userId) return;
+
+    const supUrl = window.SUPABASE_URL || "https://ctjntgierhsjxuwkiyzz.supabase.co";
+    const supKey = window.SUPABASE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0am50Z2llcmhzanh1d2tpeXp6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkwNDA3NzQsImV4cCI6MjA4NDYxNjc3NH0.NnEUMEQkhJXV2816-h2k1ElhjmkSWJ-mYfnu_hs8CL8";
+
+    // 1. Tenta REST direto via PATCH
+    try {
+      const campoBusca = String(userId).includes("@") ? "email" : "id";
+      const respPatch = await fetch(`${supUrl}/rest/v1/secretaria_usuarios?${campoBusca}=eq.${encodeURIComponent(userId)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': supKey,
+          'Authorization': `Bearer ${supKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ is_admin: novoStatusAdmin, updated_at: new Date().toISOString() })
+      });
+      if (!respPatch.ok) {
+        console.warn("PATCH retornou status:", respPatch.status);
+      }
+    } catch (e) {
+      console.warn("Falha no PATCH direto:", e);
+    }
+
+    // 2. Fallback via SDK Supabase
+    if (window.supabaseClient) {
+      try {
+        let query = window.supabaseClient.from("secretaria_usuarios").update({ is_admin: novoStatusAdmin, updated_at: new Date().toISOString() });
+        if (String(userId).includes("@")) {
+          query = query.eq("email", userId);
+        } else {
+          query = query.eq("id", userId);
+        }
+        await query;
+      } catch (e) {
+        console.error("Exceção no update via SDK:", e);
+      }
+    }
+
+    // 3. Atualiza contingência local
+    const locais = this._obterUsuariosLocais();
+    locais.forEach(u => {
+      if (u.id === userId || u.email === userId || (String(userId).includes("@") && u.email && u.email.toLowerCase() === String(userId).toLowerCase())) {
+        u.is_admin = novoStatusAdmin;
+      }
+    });
+    this._salvarUsuariosLocais(locais);
+
+    if (typeof mostrarToast === "function") {
+      mostrarToast(novoStatusAdmin ? "✓ Usuário agora é Administrador do sistema!" : "✓ Privilégio de Administrador removido.", "success");
+    }
+  },
+
+  async executarAlternarAdmin(id, novoStatusAdmin, nome) {
+    const acao = novoStatusAdmin ? "tornar ADMINISTRADOR do sistema" : "remover os privilégios de administrador de";
+    if (!confirm(`Deseja realmente ${acao} "${nome}"?`)) return;
+    await this.alternarAdminUsuario(id, novoStatusAdmin);
+    await this.carregarListaModeracao();
   },
 
   async executarAprovacao(id) {
