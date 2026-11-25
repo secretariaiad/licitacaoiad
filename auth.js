@@ -17,6 +17,11 @@ const authService = {
     "josue.ferreira@ufjf.br",
     "andre.xando@ufjf.br"
   ],
+  ADMINS: [
+    "felipe.braga@ufjf.br",
+    "josue.ferreira@ufjf.br",
+    "andre.xando@ufjf.br"
+  ],
 
   // Usuários padrão da equipe do IAD / UFJF
   DEFAULT_USERS: [
@@ -859,94 +864,105 @@ const authService = {
     if (!container) return;
     container.innerHTML = `<div style="text-align:center; padding: 2rem; color: #64748b;">Carregando usuários...</div>`;
 
-    const usuarios = await this.listarUsuarios("todos");
-    if (!usuarios || usuarios.length === 0) {
-      container.innerHTML = `<div style="text-align:center; padding: 2rem; color: #64748b;">Nenhum usuário cadastrado.</div>`;
-      return;
-    }
-
-    // Coloca os cadastros pendentes no topo da lista
-    usuarios.sort((a, b) => {
-      if (a.status === "pendente" && b.status !== "pendente") return -1;
-      if (b.status === "pendente" && a.status !== "pendente") return 1;
-      return (a.nome || "").localeCompare(b.nome || "");
-    });
-
-    let html = `
-      <table class="tabela-moderacao">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>SIAPE</th>
-            <th>Cargo / Setor</th>
-            <th>Status</th>
-            <th style="text-align: center;">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    const usuarioLogado = this.obterSessao();
-    const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
-
-    usuarios.forEach(u => {
-      let badgeClass = "badge-pendente";
-      let statusLabel = "Aguardando";
-      if (u.status === "aprovado") {
-        badgeClass = "badge-aprovado";
-        statusLabel = "Aprovado";
-      } else if (u.status === "rejeitado") {
-        badgeClass = "badge-rejeitado";
-        statusLabel = "Rejeitado";
+    try {
+      const usuarios = await this.listarUsuarios("todos");
+      if (!usuarios || usuarios.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 2rem; color: #64748b;">Nenhum usuário cadastrado.</div>`;
+        return;
       }
 
-      const isAdmin = authService.isUsuarioAdmin(u);
-      const isSuperAdminFixo = this.ADMINS.includes((u.email || "").toLowerCase().trim());
-      const isEuMesmo = emailLogado === (u.email || "").toLowerCase().trim();
+      // Coloca os cadastros pendentes no topo da lista
+      usuarios.sort((a, b) => {
+        if (a.status === "pendente" && b.status !== "pendente") return -1;
+        if (b.status === "pendente" && a.status !== "pendente") return 1;
+        return (a.nome || "").localeCompare(b.nome || "");
+      });
 
-      let acaoAdminHtml = "";
-      if (!isSuperAdminFixo && !isEuMesmo && u.status === "aprovado") {
-        if (!isAdmin) {
-          acaoAdminHtml = `
-            <button type="button" class="btn-mod-action btn-mod-admin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', true, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Tornar este usuário Administrador">
-              👑 Tornar Admin
-            </button>
-          `;
-        } else {
-          acaoAdminHtml = `
-            <button type="button" class="btn-mod-action btn-mod-unadmin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', false, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Remover privilégio de Administrador">
-              ✕ Tirar Admin
-            </button>
-          `;
-        }
-      }
-
-      html += `
-        <tr>
-          <td>
-            <strong>${u.nome}</strong> 
-            ${isAdmin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">Admin</span>' : ''}
-          </td>
-          <td>${u.email}</td>
-          <td>${u.siape || "-"}</td>
-          <td>${u.cargo || "-"} &bull; ${u.setor || "-"}</td>
-          <td><span class="status-pill ${badgeClass}">${statusLabel}</span></td>
-          <td style="text-align: center; white-space: nowrap;">
-            ${u.status !== "aprovado" ? `
-              <button type="button" class="btn-mod-action btn-mod-approve" onclick="authService.executarAprovacao('${u.id || u.email}')" title="Aprovar Usuário">✓ Aprovar</button>
-            ` : ''}
-            ${!isSuperAdminFixo && !isEuMesmo && u.status !== "rejeitado" ? `
-              <button type="button" class="btn-mod-action btn-mod-reject" onclick="authService.executarRejeicao('${u.id || u.email}')" title="Rejeitar / Bloquear Usuário">✕ Rejeitar</button>
-            ` : ''}
-            ${acaoAdminHtml}
-          </td>
-        </tr>
+      let html = `
+        <table class="tabela-moderacao">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>SIAPE</th>
+              <th>Cargo / Setor</th>
+              <th>Status</th>
+              <th style="text-align: center;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
-    });
 
-    html += `</tbody></table>`;
-    container.innerHTML = html;
+      const usuarioLogado = this.obterSessao();
+      const emailLogado = ((usuarioLogado && usuarioLogado.email) || "").toLowerCase().trim();
+      const adminEmails = (this.ADMIN_EMAILS || this.ADMINS || [
+        "felipe.braga@ufjf.br",
+        "josue.ferreira@ufjf.br",
+        "andre.xando@ufjf.br"
+      ]).map(e => (e || "").toLowerCase().trim());
+
+      usuarios.forEach(u => {
+        let badgeClass = "badge-pendente";
+        let statusLabel = "Aguardando";
+        if (u.status === "aprovado") {
+          badgeClass = "badge-aprovado";
+          statusLabel = "Aprovado";
+        } else if (u.status === "rejeitado") {
+          badgeClass = "badge-rejeitado";
+          statusLabel = "Rejeitado";
+        }
+
+        const isAdmin = authService.isUsuarioAdmin(u);
+        const uEmail = (u.email || "").toLowerCase().trim();
+        const isSuperAdminFixo = adminEmails.includes(uEmail);
+        const isEuMesmo = Boolean(emailLogado && emailLogado === uEmail);
+
+        let acaoAdminHtml = "";
+        if (!isSuperAdminFixo && !isEuMesmo && u.status === "aprovado") {
+          if (!isAdmin) {
+            acaoAdminHtml = `
+              <button type="button" class="btn-mod-action btn-mod-admin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', true, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Tornar este usuário Administrador">
+                👑 Tornar Admin
+              </button>
+            `;
+          } else {
+            acaoAdminHtml = `
+              <button type="button" class="btn-mod-action btn-mod-unadmin" onclick="authService.executarAlternarAdmin('${u.id || u.email}', false, '${(u.nome || "").replace(/'/g, "\\'")}')" title="Remover privilégio de Administrador">
+                ✕ Tirar Admin
+              </button>
+            `;
+          }
+        }
+
+        html += `
+          <tr>
+            <td>
+              <strong>${u.nome || "Sem Nome"}</strong> 
+              ${isAdmin ? '<span style="font-size:0.7rem; background:#fee2e2; color:#b91c1c; padding:2px 6px; border-radius:4px; font-weight:700; margin-left:4px;">Admin</span>' : ''}
+            </td>
+            <td>${u.email || "-"}</td>
+            <td>${u.siape || "-"}</td>
+            <td>${u.cargo || "-"} &bull; ${u.setor || "-"}</td>
+            <td><span class="status-pill ${badgeClass}">${statusLabel}</span></td>
+            <td style="text-align: center; white-space: nowrap;">
+              ${u.status !== "aprovado" ? `
+                <button type="button" class="btn-mod-action btn-mod-approve" onclick="authService.executarAprovacao('${u.id || u.email}')" title="Aprovar Usuário">✓ Aprovar</button>
+              ` : ''}
+              ${!isSuperAdminFixo && !isEuMesmo && u.status !== "rejeitado" ? `
+                <button type="button" class="btn-mod-action btn-mod-reject" onclick="authService.executarRejeicao('${u.id || u.email}')" title="Rejeitar / Bloquear Usuário">✕ Rejeitar</button>
+              ` : ''}
+              ${acaoAdminHtml}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    } catch (erro) {
+      console.error("Erro ao carregar lista de moderação:", erro);
+      container.innerHTML = `<div style="text-align:center; padding: 2rem; color: #dc2626;">Erro ao processar lista de usuários. Tente novamente em instantes.</div>`;
+    }
   },
 
   async alternarAdminUsuario(userId, novoStatusAdmin) {
